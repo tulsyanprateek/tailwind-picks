@@ -1,7 +1,7 @@
 {
   "passed": true,
   "reasons": [],
-  "generated": "2026-11-07T20:25:48+05:30",
+  "generated": "2026-11-07T20:43:47+05:30",
   "oos_expectancy_inr": 2317.463078086082,
   "oos_expectancy_r": 0.47394331224918973,
   "oos_cagr": 27.206881180838405,
@@ -2029,5 +2029,20 @@
       370560,
       402343
     ]
+  },
+  "summary": {
+    "trades": 272,
+    "win_rate": 44.11764705882353,
+    "avg_win_pct": 25.38949981637473,
+    "avg_loss_pct": -7.138393969478625,
+    "avg_hold_days": 55.08455882352941,
+    "pct_time_in_cash": 34.63722397476341,
+    "full_cagr": 21.020500740361502,
+    "full_max_dd_pct": -33.72737076708392,
+    "nifty_full_cagr": 11.44869575248082,
+    "nifty_full_max_dd_pct": -38.439852452742095,
+    "final_value": 1159860.275469943,
+    "nifty_final_value": 402342.81446819165,
+    "start": "2014"
   }
 }

@@ -77,6 +77,28 @@ background:linear-gradient(135deg,var(--blue),var(--violet));color:#0b1020}
 .how b{display:block;font-size:20px;margin-bottom:2px}
 .copied{color:var(--green);font-size:13px;margin-left:8px}
 .notes{margin-top:22px}.notes summary{color:var(--muted)}
+.verdict{display:flex;align-items:center;gap:10px;margin:12px 0 4px;padding:10px 12px;border-radius:14px;border:1px solid var(--line)}
+.verdict b{font-size:20px;font-weight:900;letter-spacing:.02em}.verdict span{font-size:13px;color:var(--muted)}
+.verdict.BUY{background:rgba(52,211,153,.10);border-color:rgba(52,211,153,.35)}.verdict.BUY b{color:var(--green)}
+.verdict.HOLD{background:rgba(251,191,36,.10);border-color:rgba(251,191,36,.35)}.verdict.HOLD b{color:var(--amber)}
+.verdict.SELL{background:rgba(251,113,133,.10);border-color:rgba(251,113,133,.35)}.verdict.SELL b{color:var(--red)}
+.verdict.WAIT{background:rgba(148,163,184,.10);border-color:rgba(148,163,184,.35)}.verdict.WAIT b{color:#cbd5e1}
+.plan{margin:12px 0;padding:12px;border-radius:14px;background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.18)}
+.ph{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);font-weight:700;margin-bottom:8px}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pgrid .l{font-size:11.5px;color:var(--muted)}.pgrid .v{font-size:17px;font-weight:800}.pgrid .s{font-size:11px;color:var(--muted)}
+.v.blue{color:var(--blue)}.v.red{color:var(--red)}.v.green{color:var(--green)}
+@media(max-width:400px){.pgrid{grid-template-columns:1fr 1fr}}
+.rules{margin:0;padding-left:18px;font-size:13.5px}.rules li{margin:4px 0}
+.sigt{width:100%;margin-top:8px;font-size:13px}.sigt th{background:transparent;position:static}
+.sigt td{white-space:normal;vertical-align:top}.sigt td:nth-child(2){white-space:nowrap}
+.hint{font-size:11px;color:var(--muted)}
+.sig{display:inline-block;min-width:52px;text-align:center;font-size:11.5px;font-weight:800;padding:3px 8px;border-radius:8px}
+.sig.BUY{background:rgba(52,211,153,.15);color:var(--green)}.sig.HOLD{background:rgba(251,191,36,.15);color:var(--amber)}
+.sig.SELL{background:rgba(251,113,133,.15);color:var(--red)}.sig.WAIT{background:rgba(148,163,184,.15);color:#cbd5e1}
+.howlink{display:flex;align-items:center;justify-content:space-between;gap:10px;text-decoration:none;color:var(--text);
+background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-top:10px}
+.howlink b{font-size:15px}.howlink span{color:var(--blue);font-weight:700}
 """
 
 COPY_JS = """
@@ -103,60 +125,78 @@ def _logo(w: Why) -> str:
     return f'<span class="clogo">{initials}{img}</span>'
 
 
+VERDICT = {
+    "BUY": ("BUY", "Strong on every check"),
+    "HOLD": ("HOLD", "Keep it if you own it"),
+    "SELL": ("SELL / AVOID", "One or more checks failed"),
+    "WAIT": ("WAIT", "Good stock, weak market"),
+}
+
+
+def signal_table(w: Why) -> str:
+    rows = "".join(
+        f'<tr><td>{esc(name)}<div class="hint">{esc(hint)}</div></td><td>{esc(reading)}</td>'
+        f'<td><span class="sig {esc(sig)}">{esc(sig)}</span></td></tr>'
+        for name, reading, sig, hint in w.signals)
+    return ('<table class="sigt"><thead><tr><th>Indicator</th><th>Today</th><th>Signal</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table>')
+
+
+def price_box(w: Why, watch: bool) -> str:
+    lv = w.levels
+    if not lv:
+        return ""
+    aim = (f'<div><div class="l">Target</div><div class="v green">{inr(lv["aim"], 2)}</div>'
+           f'<div class="s">+{lv["aim_pct"]:.0f}% (typical win)</div></div>') if lv.get("aim") else ""
+    head = "If the market turns strong" if watch else "Your plan"
+    return (f'<div class="plan"><div class="ph">{head}</div><div class="pgrid">'
+            f'<div><div class="l">Buy up to</div><div class="v blue">{inr(lv["buy"], 2)}</div>'
+            f'<div class="s">{lv["qty"]} share{"" if lv["qty"] == 1 else "s"}, {inr(lv["amount"])}</div></div>'
+            f'<div><div class="l">Stop loss</div><div class="v red">{inr(lv["stop"], 2)}</div>'
+            f'<div class="s">-{lv["stop_pct"]:.0f}%, sell if it falls here</div></div>'
+            f'{aim}</div>'
+            '<div class="ph" style="margin-top:12px">Sell when any of these happens</div><ul class="rules">'
+            f'<li>Price falls to <b>{inr(lv["stop"], 2)}</b> (stop loss, Kite sells it for you)</li>'
+            '<li>It drops out of the <b>Top 10</b> on a check-in day (1st or 15th)</li>'
+            '<li>The market turns weak on a check-in day: <b>sell everything</b></li></ul></div>')
+
+
 def stock_card(w: Why, label: str, watch: bool, extra: str = "") -> str:
-    st = w.stats
-    gap = st.get("gap", math.nan)
-    gap_txt = "At high" if gap == gap and gap < 1 else (f"-{gap:.0f}%" if gap == gap else "N/A")
     brands = ("<div class=\"brands\">" + "".join(f"<span>{esc(b)}</span>" for b in w.brands) + "</div>") if w.brands else ""
+    v_label, v_hint = VERDICT.get(w.overall, (w.overall, ""))
     about = ""
     if w.about or w.meta:
         about = (f'<details><summary>About the business</summary>'
                  + (f'<div class="meta">{esc(w.meta)}</div>' if w.meta else "")
                  + (f'<div class="about">{esc(w.about)} <span class="meta">(Yahoo Finance)</span></div>' if w.about else "")
-                 + "<ul class=\"small muted\">" + "".join(f"<li>{esc(r)}</li>" for r in w.reasons) + "</ul>"
                  + f'<div class="risk">{esc(w.risk)}</div></details>')
     return f"""
 <div class="stock">
   <div class="shead">{_logo(w)}<div class="sname"><div class="sym">{esc(w.symbol)}</div>
   <div class="co">{esc(w.company)}</div></div><span class="rankb{' watch' if watch else ''}">{esc(label)}</span></div>
   {brands}
-  <div class="kpis">
-    <div><b class="{_cls(st.get('r12'))}">{_sgn(st.get('r12'))}</b><span>1 year</span></div>
-    <div><b class="{_cls(st.get('n12'))}">{_sgn(st.get('n12'))}</b><span>Nifty 1 year</span></div>
-    <div><b class="{_cls(st.get('r3'))}">{_sgn(st.get('r3'))}</b><span>3 months</span></div>
-    <div><b>{gap_txt}</b><span>52W high</span></div>
-  </div>
+  <div class="verdict {esc(w.overall)}"><b>{esc(v_label)}</b><span>{esc(v_hint)}</span></div>
   <div class="chart" data-k="{esc(w.symbol)}" data-kind="price"></div>
   <div class="lg"><span><i style="background:#fbbf24"></i>50-day avg</span><span><i style="background:#a78bfa"></i>200-day avg</span>
-  {'<span><i style="background:#fb7185"></i>Stop loss</span>' if not watch else ''}</div>
-  <div class="tl" style="margin-top:12px">Beating the Nifty? (above 100 = yes)</div>
-  <div class="chart sm" data-k="{esc(w.symbol)}" data-kind="rs"></div>
-  <p class="one">{esc(w.oneliner)}</p>
+  <span><i style="background:#60a5fa"></i>Buy up to</span><span><i style="background:#fb7185"></i>Stop loss</span></div>
+  {price_box(w, watch)}
+  <details open><summary>Signals ({sum(1 for r in w.signals if r[2] == 'BUY')} of {len(w.signals)} say BUY)</summary>{signal_table(w)}
+  <div class="tl" style="margin-top:12px">Beating the Nifty? (line above 100 = yes)</div>
+  <div class="chart sm" data-k="{esc(w.symbol)}" data-kind="rs"></div></details>
   {extra}
   {about}
 </div>"""
 
 
 def pick_extra(pk: Pick, k: int) -> str:
-    target = (f'<div><div class="l">Target</div><div class="v">{inr(pk.target, 2)}</div></div>' if pk.target else
-              f'<div><div class="l">Amount</div><div class="v">{inr(pk.position_value)}</div></div>')
     flags = []
     if pk.results_level == "avoid":
-        flags.append(f'<span class="badge red">{esc(pk.results_text)}</span>')
+        flags.append(f'<span class="badge red">{esc(pk.results_text)}</span> ')
     if pk.fund.status == "FAIL":
         flags.append('<span class="badge red">Quality check failed</span>')
-    return f"""
-  <div class="buybox">
-    <div><div class="l">Buy</div><div class="v">{pk.qty} shares</div></div>
-    <div><div class="l">Up to price</div><div class="v">{inr(pk.limit, 2)}</div></div>
-    <div><div class="l">Stop loss</div><div class="v red">{inr(pk.stop, 2)}</div></div>
-    {target}
-    <div><div class="l">Max loss</div><div class="v red">{inr(-pk.risk_inr)}</div></div>
-    <div><div class="l">Charges</div><div class="v">{inr(pk.round_trip_cost)}</div></div>
-  </div>
-  {''.join(flags)}
-  <details><summary>Kite order (copy)</summary><pre class="order" id="o{k}">{esc(pk.order_text)}</pre>
-  <button onclick="copyText('o{k}',this)">Copy order</button><span class="copied"></span></details>"""
+    return (''.join(flags)
+            + f'<details><summary>Kite order (copy)</summary><pre class="order" id="o{k}">{esc(pk.order_text)}</pre>'
+            f'<button onclick="copyText(\'o{k}\',this)">Copy order</button><span class="copied"></span></details>')
 
 
 def holding_card(h: HoldingCheck) -> str:
@@ -185,11 +225,13 @@ def build_report_html(ctx: dict, cfg: dict) -> str:
     if failed:
         headline, tone, sub = "Do not trade this", "red", "The 12-year test shows no edge since 2021."
     elif not regime_on:
-        headline, tone = "Stay in cash", "red"
-        sub = ("The market is not in a clear uptrend. Sell everything at tomorrow's check-in." if tomorrow
-               else "The market is not in a clear uptrend. No new buys for now.")
+        headline, tone = "Don't buy now", "red"
+        sub = ("The overall market is weak. Tomorrow, sell any stocks from this method and keep the money aside."
+               if tomorrow else
+               f"The overall market is weak. Keep your money aside. If you own stocks from this method, "
+               f"sell them on {checkin_day:%a %d %b}.")
     elif tomorrow:
-        headline, tone, sub = "Check-in tomorrow", "blue", f"Before 9:15 am, {checkin_day:%a %d %b}:"
+        headline, tone, sub = "Action tomorrow", "blue", f"Before 9:15 am on {checkin_day:%a %d %b}:"
         sells = [h for h in holdings if h.action == "SELL"]
         if sells:
             steps.append("Sell " + ", ".join(esc(h.symbol) for h in sells))
@@ -199,10 +241,10 @@ def build_report_html(ctx: dict, cfg: dict) -> str:
         if not holdings:
             steps.append(f"Sell anything not in the Top {keep_n}")
     else:
-        headline, tone, sub = "No action today", "green", f"Next check-in {checkin_day:%a %d %b}."
+        headline, tone, sub = "Hold, no action today", "green", f"Next check-in {checkin_day:%a %d %b}. Stop losses on Kite work on their own."
     steps_html = ('<ol class="steps">' + "".join(f"<li>{x}</li>" for x in steps) + "</ol>") if steps else ""
     hero = (f'<header class="hero {tone}"><h1 class="headline">{headline}</h1><p class="sub">{sub}</p>{steps_html}'
-            f'<div class="chips"><span class="chip"><i class="dot {"g" if regime_on else "r"}"></i>Market {"ON" if regime_on else "OFF"}</span>'
+            f'<div class="chips"><span class="chip"><i class="dot {"g" if regime_on else "r"}"></i>Market {"strong" if regime_on else "weak"}</span>'
             f'<span class="chip">Next check-in <b>{checkin_day:%a %d %b}</b></span>'
             f'<span class="chip">Prices to {data_day:%d %b}</span></div></header>')
     banner = ""
@@ -240,7 +282,7 @@ def build_report_html(ctx: dict, cfg: dict) -> str:
     else:
         title = "Watch list"
         ww = ctx.get("watch_why") or []
-        stocks = ('<p class="small muted">Strongest stocks now. Watch only: no buying until the market turns up.</p>'
+        stocks = ('<p class="small muted">Strongest stocks now. Not buying yet. These are ready for when the market turns strong.</p>'
                   + "".join(stock_card(w, f"Watch #{w.rank}", True) for w in ww)) if ww else \
             '<p class="muted">No buys until the market turns up.</p>'
 
@@ -268,11 +310,9 @@ def build_report_html(ctx: dict, cfg: dict) -> str:
                     '<span><i style="background:#94a3b8"></i>Nifty 50</span></div>' if eq else "")
                  + '<a class="more" href="backtest.html">Full test details &rarr;</a></div>')
 
-    how = ('<h2 class="sec">How it works</h2><div class="how">'
-           '<div><b>📈</b>Pick the 5 fastest-rising Nifty 100 stocks</div>'
-           '<div><b>🚦</b>Only when the Nifty 50 is rising</div>'
-           '<div><b>🛡️</b>15% stop loss on every stock</div>'
-           '<div><b>🔁</b>Review on the 1st and 15th</div></div>')
+    how = ('<a class="howlink" href="how.html"><div><b>How does Momentum Radar work?</b>'
+           '<div class="small muted">Signals, the 50 and 200-day averages, stop loss and target, explained simply.</div></div>'
+           '<span>Read &rarr;</span></a>')
 
     skipped = ctx.get("skipped_quality", [])
     notes = [esc(n) for n in ctx.get("notes", [])] + [esc(f"Skipped {s}: {why}") for s, why in skipped]
@@ -290,17 +330,17 @@ def build_report_html(ctx: dict, cfg: dict) -> str:
         charts["EQUITY"] = st["equity_weekly"]
     head = f'<script src="{LIB_URL}"></script>' if charts else ""
     js = COPY_JS + ("window.__CHARTS=" + json.dumps(charts, separators=(",", ":")) + ";" + CHART_JS if charts else "")
-    html = page("Check-in", body, js, brand=brand, head_extra=head)
+    html = page("Dashboard", body, js, brand=brand, head_extra=head, active="index.html")
     return html.replace("</style>", SCAN_CSS + "</style>", 1)
 
 
 def phone_message(ctx: dict) -> str:
     """Short plain-text summary (Telegram, if switched on)."""
     st = ctx["backtest_status"]
-    lines = [f"Stock check, prices to {ctx['data_date']:%a %d %b}"]
+    lines = [f"Momentum Radar, prices to {ctx['data_date']:%a %d %b}"]
     if st is not None and not st["passed"]:
         lines.append("WARNING: STRATEGY FAILED OUT OF SAMPLE. Do not trade it.")
-    lines.append("Market: " + ("ON" if ctx["regime_on"] else "OFF, stay in cash"))
+    lines.append("Market: " + ("strong" if ctx["regime_on"] else "weak, do not buy"))
     stops = [h for h in ctx["holdings"] if h.action == "STOP HIT"]
     for h in stops:
         lines.append(f"Stop loss hit: {h.symbol}. Check Kite sold it, then remove it from open_trades.csv.")

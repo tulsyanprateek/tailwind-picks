@@ -14,12 +14,13 @@ import pandas as pd
 
 from screener import notify
 from screener.checkin import (check_holdings, is_checkin_session, load_open_trades, make_pick,
-                              load_brands, next_checkin, next_weekday, why_stock)
+                              load_brands, next_checkin, next_weekday, round_to_tick, why_stock)
 from screener.charts import index_payload, stock_payload
 from screener.profiles import get_profile
 from screener.config import load_config
 from screener.data import load_prices, load_universe
 from screener.fundamentals import evaluate, load_fundamentals, load_results_calendar
+from screener.report_how import build_how_html
 from screener.report_scan import build_report_html, candidates_json, phone_message
 from screener.signals import build_panels, compute_symbol_signals, ranked_eligible, regime_series, trading_calendar
 from screener.utils import now_ist, setup_logging
@@ -151,25 +152,36 @@ def run(cfg: dict, log) -> int:
         else:
             break
 
-    # Plain-language "why this stock" for the picks (and the watch list when the market is OFF).
-    def why_for(sym: str, rank: int):
-        fund = evaluate(sym, industry.get(sym, ""), ftable, cfg) if ftable is not None else None
-        return why_stock(sym, rank, float(panels.rs_pct.iloc[i][sym]), bool(panels.trend_ok.iloc[i][sym]),
-                         fresh[sym], index_df, data_ts, get_profile(sym, cfg), fund, cfg, brands.get(sym))
+    status_path = out_dir / "backtest_status.json"
+    status = json.loads(status_path.read_text(encoding="utf-8")) if status_path.exists() else None
+    aim_pct = ((status or {}).get("summary") or {}).get("avg_win_pct")
 
+    # Signals, prices and plain-language reasons for each stock shown.
     brands = load_brands(cfg)
 
+    def why_for(sym: str, rank: int, pick=None):
+        fund = evaluate(sym, industry.get(sym, ""), ftable, cfg) if ftable is not None else None
+        w = why_stock(sym, rank, float(panels.rs_pct.iloc[i][sym]), bool(panels.trend_ok.iloc[i][sym]),
+                      fresh[sym], index_df, data_ts, get_profile(sym, cfg), fund, cfg, brands.get(sym),
+                      market_on=regime_on)
+        if pick is None:
+            pick = make_pick(sym, rank, panels, i, universe, cfg, fund or evaluate(sym, "", None, cfg),
+                             res_cal, today, budget)
+        w.levels = {"buy": pick.limit, "stop": pick.stop, "qty": pick.qty, "amount": pick.qty * pick.last_close,
+                    "close": pick.last_close, "stop_pct": pick.stop_pct,
+                    "aim": round_to_tick(pick.last_close * (1 + aim_pct / 100), "nearest") if aim_pct else None,
+                    "aim_pct": aim_pct}
+        return w
+
     for pk in picks:
-        pk.why = why_for(pk.symbol, pk.rank)
+        pk.why = why_for(pk.symbol, pk.rank, pk)
     watch_why = [] if regime_on else [why_for(s, r) for r, s in enumerate(ranked_any[:5], 1)]
     charts = {"NIFTY": index_payload(index_df, data_ts, cfg)}
     for pk in picks:
         charts[pk.symbol] = stock_payload(fresh[pk.symbol], index_df, data_ts, stop=pk.stop, limit=pk.limit)
     for w in watch_why:
-        charts[w.symbol] = stock_payload(fresh[w.symbol], index_df, data_ts)
-
-    status_path = out_dir / "backtest_status.json"
-    status = json.loads(status_path.read_text(encoding="utf-8")) if status_path.exists() else None
+        charts[w.symbol] = stock_payload(fresh[w.symbol], index_df, data_ts, stop=w.levels["stop"],
+                                         limit=w.levels["buy"])
 
     ctx = {"generated": now_ist(), "data_date": data_day, "next_checkin": checkin_day,
            "checkin_next": checkin_next, "regime_on": regime_on, "backtest_status": status,
@@ -179,6 +191,8 @@ def run(cfg: dict, log) -> int:
            "top_list": list(enumerate(ranked[:cfg["portfolio"]["keep_if_rank_within"]], 1))}
     (out_dir / "report.html").write_text(build_report_html(ctx, cfg), encoding="utf-8")
     (out_dir / "candidates.json").write_text(candidates_json(ctx), encoding="utf-8")
+    (out_dir / "how.html").write_text(build_how_html(cfg, status, charts.get("NIFTY")), encoding="utf-8")
+    (out_dir / "index.html").write_text((out_dir / "report.html").read_text(encoding="utf-8"), encoding="utf-8")
     text = phone_message(ctx)
     log.info("Phone message:\n%s", text)
     notify.send(cfg, text, out_dir / "report.html")

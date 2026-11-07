@@ -239,7 +239,7 @@ def build_backtest_html(ctx: dict, cfg: dict) -> str:
           "a.click();a.remove();}")
 
     body = f"""
-<h1>Momentum Rotation: 12-year backtest</h1>
+<h1>Momentum Radar: 12-year test</h1>
 <div class="muted small">Nifty 100 stocks, ₹{inr(p["capital"], symbol=False)} start, {p["holdings"]} stocks held,
 check-in every 2 weeks. Generated {ctx["generated"]:%d %b %Y %H:%M} IST.</div>
 {banner}
@@ -267,4 +267,4 @@ that part is not earning its place.</p>
 <p><button onclick="dl()">Download CSV</button></p>
 {_trade_table(ctx["trades_full"]) if len(ctx["trades_full"]) else "<p>No trades.</p>"}
 """
-    return page("12-year test", body, js, brand=(cfg.get("brand", {}).get("name", "Momentum Radar"), cfg.get("brand", {}).get("tagline", "")))
+    return page("12-year test", body, js, active="backtest.html", brand=(cfg.get("brand", {}).get("name", "Momentum Radar"), cfg.get("brand", {}).get("tagline", "")))

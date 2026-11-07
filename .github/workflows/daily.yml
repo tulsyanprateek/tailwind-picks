@@ -1,6 +1,6 @@
-# Runs the stock check every weekday at 6 pm IST in GitHub's cloud (free) and publishes
+# Runs Momentum Radar every weekday at 6 pm IST in GitHub's cloud (free) and publishes
 # the report as a web page from the docs/ folder (GitHub Pages).
-name: Daily stock check
+name: Momentum Radar daily update
 
 on:
   schedule:
@@ -11,7 +11,7 @@ permissions:
   contents: write              # to save the new report into docs/
 
 concurrency:
-  group: daily-stock-check
+  group: momentum-radar-daily
   cancel-in-progress: false
 
 jobs:

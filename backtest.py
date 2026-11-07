@@ -214,6 +214,22 @@ def main() -> int:
     bw = beq_full.resample("W-FRI").last().reindex(eqw.index).ffill()
     status["equity_weekly"] = {"t": [f"{d:%Y-%m-%d}" for d in eqw.index],
                                "s": [round(float(v)) for v in eqw], "n": [round(float(v)) for v in bw]}
+    # Plain-language numbers for the dashboard and the "How it works" page (full 12 years).
+    tf = trades_full
+    move = (tf["exit"] / tf["entry"] - 1) * 100 if len(tf) else pd.Series(dtype=float)
+    wins = tf["net_pnl"] > 0 if len(tf) else pd.Series(dtype=bool)
+    status["summary"] = {
+        "trades": int(len(tf)),
+        "win_rate": float(wins.mean() * 100) if len(tf) else None,
+        "avg_win_pct": float(move[wins].mean()) if wins.any() else None,
+        "avg_loss_pct": float(move[~wins].mean()) if (~wins).any() else None,
+        "avg_hold_days": full_m.get("avg_holding_days"),
+        "pct_time_in_cash": full_m.get("pct_time_in_cash"),
+        "full_cagr": full_m["cagr"], "full_max_dd_pct": full_m["max_dd_pct"],
+        "nifty_full_cagr": bfull["cagr"], "nifty_full_max_dd_pct": bfull["max_dd_pct"],
+        "final_value": full_m["final_value"], "nifty_final_value": bfull["final_value"],
+        "start": f"{start:%Y}",
+    }
     (out_dir / "backtest_status.json").write_text(json.dumps(status, indent=2), encoding="utf-8")
 
     log.info("Verdict: %s", "PASSED" if v["passed"] else "STRATEGY FAILED OUT OF SAMPLE")

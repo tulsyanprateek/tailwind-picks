@@ -85,6 +85,9 @@ class Why:
     stats: dict = field(default_factory=dict)
     brands: list[str] = field(default_factory=list)
     domain: str = ""
+    signals: list = field(default_factory=list)   # (indicator, reading, BUY/HOLD/SELL/WAIT, meaning)
+    overall: str = ""                             # BUY, HOLD, SELL or WAIT
+    levels: dict = field(default_factory=dict)    # buy, stop, aim, qty, amount
 
 
 def load_brands(cfg: dict) -> dict[str, tuple[str, list[str]]]:
@@ -104,7 +107,7 @@ def _ret(c: pd.Series, n: int) -> float:
 def why_stock(sym: str, rank: int, rs_pct: float, trend_ok: bool, df: pd.DataFrame,
               index_df: pd.DataFrame, data_ts: pd.Timestamp, profile: dict,
               fund: FundResult | None, cfg: dict,
-              brand_info: tuple[str, list[str]] | None = None) -> Why:
+              brand_info: tuple[str, list[str]] | None = None, market_on: bool = True) -> Why:
     """Plain-language reasons. These are the real reasons the method picked the stock
     (price strength and trend), plus what the company does for context."""
     c = df["Close"].loc[:data_ts]
@@ -149,8 +152,45 @@ def why_stock(sym: str, rank: int, rs_pct: float, trend_ok: bool, df: pd.DataFra
         one = "Strong over the year, but its trend is not clean right now."
     domain, brands = brand_info or ("", [])
     stats = {"r12": r12, "n12": n12, "r3": r3, "gap": gap, "rs_pct": rs_pct}
+    signals, overall = indicator_signals(c, hi, r12, n12, rank, market_on, cfg)
     return Why(sym, profile.get("name") or sym, rank, reasons, " · ".join(meta_parts),
-               profile.get("summary") or "", risk, one, stats, brands, domain)
+               profile.get("summary") or "", risk, one, stats, brands, domain, signals, overall)
+
+
+def indicator_signals(c: pd.Series, hi52: float, r12: float, n12: float, rank: int, market_on: bool,
+                      cfg: dict) -> tuple[list, str]:
+    """Each rule of the method as one row: what it reads today and what it says."""
+    from . import indicators as ind
+    close = float(c.iloc[-1])
+    s50, s200 = float(ind.sma(c, 50).iloc[-1]), float(ind.sma(c, 200).iloc[-1])
+    s200_prev = float(ind.sma(c, 200).iloc[-21]) if len(c) > 221 else math.nan
+    n_hold, keep = cfg["portfolio"]["holdings"], cfg["portfolio"]["keep_if_rank_within"]
+    rows = [
+        ("Market (Nifty 50)", "Strong" if market_on else "Weak", "BUY" if market_on else "WAIT",
+         "Buy only when the whole market is rising"),
+        ("Price vs 50-day average", f"{(close / s50 - 1) * 100:+.0f}%", "BUY" if close > s50 else "SELL",
+         "Above = short-term trend is up"),
+        ("50-day vs 200-day average", "Above" if s50 > s200 else "Below", "BUY" if s50 > s200 else "SELL",
+         "Above = long-term trend is up"),
+        ("200-day average", "Rising" if s200 > s200_prev else "Falling", "BUY" if s200 > s200_prev else "SELL",
+         "Rising = the big trend is healthy"),
+        ("Distance from 1-year high", "At high" if close >= hi52 * 0.99 else f"{(close / hi52 - 1) * 100:.0f}%",
+         "BUY" if close >= 0.75 * hi52 else "SELL", "Within 25% of the high = still strong"),
+        ("1 year vs Nifty 50", f"{r12:+.0f}% vs {n12:+.0f}%", "BUY" if r12 > n12 else "SELL",
+         "Rising faster than the market"),
+        ("Momentum rank", f"#{rank}", "BUY" if rank <= n_hold else "HOLD" if rank <= keep else "SELL",
+         f"Top {n_hold} = buy, top {keep} = hold, below = sell"),
+    ]
+    stock_rows = [r[2] for r in rows[1:]]
+    if not market_on:
+        overall = "WAIT"
+    elif "SELL" in stock_rows:
+        overall = "SELL"
+    elif rank <= n_hold:
+        overall = "BUY"
+    else:
+        overall = "HOLD"
+    return rows, overall
 
 
 # --------------------------------------------------------------------------- buy list
@@ -315,7 +355,7 @@ def check_holdings(trades: pd.DataFrame, prices: dict[str, pd.DataFrame], p: Pan
             if not regime_on:
                 hc.action, hc.level = "SELL", "red"
                 hc.detail = ("Market filter is OFF. Sell at tomorrow's open (market order, or cancel the GTT "
-                             "and sell), then stay in cash.")
+                             "and sell), then keep the money aside.")
             elif rank is None:
                 hc.action, hc.level = "SELL", "red"
                 hc.detail = (f"No longer in the top {keep_rank} qualifying stocks. Sell at tomorrow's open "
