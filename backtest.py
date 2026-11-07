@@ -210,6 +210,10 @@ def main() -> int:
         "nifty_oos_cagr": v["bench_oos_cagr"], "nifty_oos_max_dd_pct": v["bench_oos_max_dd_pct"],
         "data_end": f"{end:%Y-%m-%d}",
     }
+    eqw = runs["full"].equity.resample("W-FRI").last().dropna()
+    bw = beq_full.resample("W-FRI").last().reindex(eqw.index).ffill()
+    status["equity_weekly"] = {"t": [f"{d:%Y-%m-%d}" for d in eqw.index],
+                               "s": [round(float(v)) for v in eqw], "n": [round(float(v)) for v in bw]}
     (out_dir / "backtest_status.json").write_text(json.dumps(status, indent=2), encoding="utf-8")
 
     log.info("Verdict: %s", "PASSED" if v["passed"] else "STRATEGY FAILED OUT OF SAMPLE")

@@ -267,4 +267,4 @@ that part is not earning its place.</p>
 <p><button onclick="dl()">Download CSV</button></p>
 {_trade_table(ctx["trades_full"]) if len(ctx["trades_full"]) else "<p>No trades.</p>"}
 """
-    return page("Backtest report", body, js)
+    return page("12-year test", body, js, brand=(cfg.get("brand", {}).get("name", "Momentum Radar"), cfg.get("brand", {}).get("tagline", "")))

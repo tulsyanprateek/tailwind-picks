@@ -56,16 +56,41 @@ footer{margin:32px 0 12px;color:var(--muted);font-size:13px;border-top:1px solid
 FOOTER = ("Screening tool for personal use. Not investment advice. "
           "Past backtest results do not guarantee future returns.")
 
+DISCLAIMER = ("Free personal experiment, built with AI help. Not investment advice and not a "
+              "recommendation to buy or sell. The author is not registered with SEBI as an investment "
+              "adviser or research analyst. Stocks can lose money; past results do not guarantee future "
+              "returns. Do your own research or ask a SEBI-registered adviser.")
+
+BRAND_CSS = """
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+.logo{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+background:conic-gradient(from 200deg,#60a5fa,#a78bfa,#34d399,#60a5fa);box-shadow:0 0 24px rgba(96,165,250,.35)}
+.logo i{width:12px;height:12px;border-radius:50%;background:#070b14;box-shadow:0 0 0 3px rgba(7,11,20,.35)}
+.bname{font-weight:800;font-size:17px;letter-spacing:-.02em;line-height:1.1}.btag{font-size:11.5px;color:var(--muted)}
+.exp{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;
+color:#fbbf24;background:rgba(251,191,36,.10);border:1px solid rgba(251,191,36,.25);white-space:nowrap}
+.disc{font-size:12px;color:#c9b98a;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.16);
+border-radius:12px;padding:8px 12px;margin:0 0 16px}
+"""
+
 
 def esc(s) -> str:
     return html.escape(str(s))
 
 
-def page(title: str, body: str, extra_js: str = "") -> str:
+def page(title: str, body: str, extra_js: str = "", brand: tuple[str, str] | None = None,
+         head_extra: str = "") -> str:
+    name, tagline = brand or ("Momentum Radar", "Nifty 100 trend tracker")
+    top = (f'<div class="topbar"><a class="brand" href="index.html"><span class="logo"><i></i></span>'
+           f'<span><div class="bname">{esc(name)}</div><div class="btag">{esc(tagline)}</div></span></a>'
+           f'<span class="exp">Free experiment</span></div>'
+           f'<div class="disc">{esc(DISCLAIMER)}</div>')
     return (f"<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
             f"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-            f"<title>{esc(title)}</title><style>{CSS}</style></head><body><div class=\"wrap\">"
-            f"{body}<footer>{esc(FOOTER)}</footer></div>"
+            f"<meta name=\"robots\" content=\"noindex,nofollow\"><meta name=\"theme-color\" content=\"#070b14\">"
+            f"<title>{esc(name)}: {esc(title)}</title><style>{CSS}{BRAND_CSS}</style>{head_extra}</head>"
+            f"<body><div class=\"wrap\">{top}{body}<footer>{esc(DISCLAIMER)}<br>{esc(FOOTER)}</footer></div>"
             f"{'<script>' + extra_js + '</script>' if extra_js else ''}</body></html>")
 
 

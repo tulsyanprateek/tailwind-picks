@@ -14,7 +14,8 @@ import pandas as pd
 
 from screener import notify
 from screener.checkin import (check_holdings, is_checkin_session, load_open_trades, make_pick,
-                              next_checkin, next_weekday, why_stock)
+                              load_brands, next_checkin, next_weekday, why_stock)
+from screener.charts import index_payload, stock_payload
 from screener.profiles import get_profile
 from screener.config import load_config
 from screener.data import load_prices, load_universe
@@ -154,11 +155,18 @@ def run(cfg: dict, log) -> int:
     def why_for(sym: str, rank: int):
         fund = evaluate(sym, industry.get(sym, ""), ftable, cfg) if ftable is not None else None
         return why_stock(sym, rank, float(panels.rs_pct.iloc[i][sym]), bool(panels.trend_ok.iloc[i][sym]),
-                         fresh[sym], index_df, data_ts, get_profile(sym, cfg), fund, cfg)
+                         fresh[sym], index_df, data_ts, get_profile(sym, cfg), fund, cfg, brands.get(sym))
+
+    brands = load_brands(cfg)
 
     for pk in picks:
         pk.why = why_for(pk.symbol, pk.rank)
     watch_why = [] if regime_on else [why_for(s, r) for r, s in enumerate(ranked_any[:5], 1)]
+    charts = {"NIFTY": index_payload(index_df, data_ts, cfg)}
+    for pk in picks:
+        charts[pk.symbol] = stock_payload(fresh[pk.symbol], index_df, data_ts, stop=pk.stop, limit=pk.limit)
+    for w in watch_why:
+        charts[w.symbol] = stock_payload(fresh[w.symbol], index_df, data_ts)
 
     status_path = out_dir / "backtest_status.json"
     status = json.loads(status_path.read_text(encoding="utf-8")) if status_path.exists() else None
@@ -167,7 +175,7 @@ def run(cfg: dict, log) -> int:
            "checkin_next": checkin_next, "regime_on": regime_on, "backtest_status": status,
            "picks": picks, "holdings": holdings, "next_in_line": next_in_line,
            "skipped_quality": skipped, "watch_when_off": ranked_any[:5], "notes": notes,
-           "phone_notes": phone_notes, "watch_why": watch_why,
+           "phone_notes": phone_notes, "watch_why": watch_why, "charts": charts,
            "top_list": list(enumerate(ranked[:cfg["portfolio"]["keep_if_rank_within"]], 1))}
     (out_dir / "report.html").write_text(build_report_html(ctx, cfg), encoding="utf-8")
     (out_dir / "candidates.json").write_text(candidates_json(ctx), encoding="utf-8")

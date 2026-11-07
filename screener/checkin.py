@@ -81,6 +81,20 @@ class Why:
     meta: str
     about: str
     risk: str
+    oneliner: str = ""
+    stats: dict = field(default_factory=dict)
+    brands: list[str] = field(default_factory=list)
+    domain: str = ""
+
+
+def load_brands(cfg: dict) -> dict[str, tuple[str, list[str]]]:
+    """symbol -> (website domain for the logo, everyday brands people know)."""
+    path = cfg["paths"]["data_dir"] / "brands.csv"
+    if not path.exists():
+        return {}
+    df = pd.read_csv(path).fillna("")
+    return {str(r.symbol).upper(): (str(r.domain), [b.strip() for b in str(r.known_for).split(";") if b.strip()])
+            for r in df.itertuples(index=False)}
 
 
 def _ret(c: pd.Series, n: int) -> float:
@@ -89,7 +103,8 @@ def _ret(c: pd.Series, n: int) -> float:
 
 def why_stock(sym: str, rank: int, rs_pct: float, trend_ok: bool, df: pd.DataFrame,
               index_df: pd.DataFrame, data_ts: pd.Timestamp, profile: dict,
-              fund: FundResult | None, cfg: dict) -> Why:
+              fund: FundResult | None, cfg: dict,
+              brand_info: tuple[str, list[str]] | None = None) -> Why:
     """Plain-language reasons. These are the real reasons the method picked the stock
     (price strength and trend), plus what the company does for context."""
     c = df["Close"].loc[:data_ts]
@@ -126,8 +141,16 @@ def why_stock(sym: str, rank: int, rs_pct: float, trend_ok: bool, df: pd.DataFra
     stop_txt = f"the {t['stop_pct']:g}% stop loss" if t.get("stop_mode") == "percent" else "the stop loss"
     risk = ("Picked for its price strength, not because of a forecast about the business. Strong stocks "
             f"can fall quickly; {stop_txt} limits the loss.")
+    if rs_pct >= 90 and trend_ok:
+        one = "One of the fastest-rising Nifty 100 stocks, still in a steady uptrend."
+    elif trend_ok:
+        one = "Rising faster than most Nifty 100 stocks, in a steady uptrend."
+    else:
+        one = "Strong over the year, but its trend is not clean right now."
+    domain, brands = brand_info or ("", [])
+    stats = {"r12": r12, "n12": n12, "r3": r3, "gap": gap, "rs_pct": rs_pct}
     return Why(sym, profile.get("name") or sym, rank, reasons, " · ".join(meta_parts),
-               profile.get("summary") or "", risk)
+               profile.get("summary") or "", risk, one, stats, brands, domain)
 
 
 # --------------------------------------------------------------------------- buy list

@@ -10,6 +10,11 @@
 # These defaults are standard textbook values. Do not tune them to make the backtest look
 # better: that is curve fitting and it will not hold up with real money.
 
+# Name shown on the web pages.
+brand:
+  name: "Momentum Radar"
+  tagline: "Nifty 100 trend tracker"
+
 paths:
   # Where report.html, candidates.json, backtest.html and the CSV exports go.
   # Relative paths are relative to this project folder. An absolute path works too,
