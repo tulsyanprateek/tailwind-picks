@@ -16,7 +16,8 @@ from screener import notify
 from screener.checkin import (check_holdings, is_checkin_session, load_open_trades, make_pick,
                               load_brands, next_checkin, next_weekday, round_to_tick, why_stock)
 from screener.charts import index_payload, stock_payload
-from screener.profiles import get_profile
+from screener.confirm import second_opinion
+from screener.profiles import get_logo, get_profile
 from screener.config import load_config
 from screener.data import load_prices, load_universe
 from screener.fundamentals import evaluate, load_fundamentals, load_results_calendar
@@ -189,16 +190,27 @@ def run(cfg: dict, log) -> int:
         charts[w.symbol] = stock_payload(fresh[w.symbol], index_df, data_ts, sessions=500,
                                          stop=w.levels["stop"], limit=w.levels["buy"])
         charts[w.symbol]["aim"] = w.levels.get("aim")
+        w.second, w.second_agree, extra = second_opinion(fresh[w.symbol], data_ts)
+        w.logo = get_logo(w.domain, cfg)
+        charts[w.symbol].update(extra)
+
+    # How the radar was built today (the funnel), for the dashboard.
+    sc = panels.rs_score.iloc[i].notna()
+    funnel = {"scanned": int(sc.sum()),
+              "uptrend": int((panels.trend_ok.iloc[i] & sc).sum()),
+              "momentum": int(((panels.rs_pct.iloc[i] >= cfg["relative_strength"]["min_percentile"]) & sc).sum()),
+              "both": len(ranked_any), "top": min(keep_n, len(ranked_any)),
+              "buy": len(picks) if regime_on else 0, "market_on": regime_on}
 
     ctx = {"generated": now_ist(), "data_date": data_day, "next_checkin": checkin_day,
            "checkin_next": checkin_next, "regime_on": regime_on, "backtest_status": status,
            "picks": picks, "holdings": holdings, "next_in_line": next_in_line,
            "skipped_quality": skipped, "watch_when_off": ranked_any[:5], "notes": notes,
-           "phone_notes": phone_notes, "watch_why": watch_why, "charts": charts, "pick_map": pick_map,
+           "phone_notes": phone_notes, "watch_why": watch_why, "charts": charts, "pick_map": pick_map, "funnel": funnel,
            "top_list": list(enumerate(ranked[:cfg["portfolio"]["keep_if_rank_within"]], 1))}
     (out_dir / "report.html").write_text(build_report_html(ctx, cfg), encoding="utf-8")
     (out_dir / "candidates.json").write_text(candidates_json(ctx), encoding="utf-8")
-    (out_dir / "how.html").write_text(build_how_html(cfg, status, charts.get("NIFTY")), encoding="utf-8")
+    (out_dir / "how.html").write_text(build_how_html(cfg, status, charts.get("NIFTY"), funnel), encoding="utf-8")
     (out_dir / "index.html").write_text((out_dir / "report.html").read_text(encoding="utf-8"), encoding="utf-8")
     text = phone_message(ctx)
     log.info("Phone message:\n%s", text)

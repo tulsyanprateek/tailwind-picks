@@ -79,6 +79,31 @@ def stop_check(panels, ohlc, cfg, start, is_end, base_modules, capital) -> list[
     return rows
 
 
+# Check-in interval check (2014 to 2020 only). Each interval is run with different calendar
+# dates, because the less often you check, the more the result depends on lucky dates.
+INTERVALS = [
+    ("Every week", [{"mode": "weekly"}]),
+    ("Every 2 weeks", [{"rebalance_days_of_month": [1, 15]}, {"rebalance_days_of_month": [8, 22]}]),
+    ("Every month", [{"rebalance_days_of_month": [1]}, {"rebalance_days_of_month": [15]}]),
+    ("Every 3 months", [{"rebalance_days_of_month": [1], "months": m} for m in ([1, 4, 7, 10], [2, 5, 8, 11], [3, 6, 9, 12])]),
+]
+
+
+def interval_check(panels, ohlc, cfg, start, is_end, base_modules, capital) -> list[dict]:
+    out = []
+    for name, variants in INTERVALS:
+        res = []
+        for v in variants:
+            c = copy.deepcopy(cfg)
+            c["schedule"].update({"mode": "twice_monthly", "months": None, **v})
+            m = summarize(simulate(panels, ohlc, c, start, is_end, base_modules), capital)
+            res.append(m)
+        out.append({"name": name, "cagr_min": min(m["cagr"] for m in res), "cagr_max": max(m["cagr"] for m in res),
+                    "dd_min": min(m["max_dd_pct"] for m in res), "dd_max": max(m["max_dd_pct"] for m in res),
+                    "trades": round(sum(m["trades"] for m in res) / len(res))})
+    return out
+
+
 def lookahead_spot_checks(prices, signals, cfg, n_checks, seed) -> int:
     """Recompute signals on data cut off at a random day and compare with the full run.
 
@@ -160,6 +185,10 @@ def main() -> int:
                  row["oos"]["cagr"])
 
     stop_rows = stop_check(panels, ohlc, cfg, start, is_end, base_modules, capital)
+    interval_rows = interval_check(panels, ohlc, cfg, start, is_end, base_modules, capital)
+    for r in interval_rows:
+        log.info("Interval check 2014-2020: %-15s CAGR %5.1f%% to %5.1f%%  worst fall %6.1f%% to %6.1f%%",
+                 r["name"], r["cagr_min"], r["cagr_max"], r["dd_max"], r["dd_min"])
     for r in stop_rows:
         log.info("Stop check 2014-2020: %-40s CAGR %6.1f%%  maxDD %6.1f%%  ratio %.2f%s%s", r["name"],
                  r["m"]["cagr"], r["m"]["max_dd_pct"], r["ratio"], "  <- best" if r["best"] else "",
@@ -218,6 +247,7 @@ def main() -> int:
     tf = trades_full
     move = (tf["exit"] / tf["entry"] - 1) * 100 if len(tf) else pd.Series(dtype=float)
     wins = tf["net_pnl"] > 0 if len(tf) else pd.Series(dtype=bool)
+    status["interval_check"] = interval_rows
     status["summary"] = {
         "trades": int(len(tf)),
         "win_rate": float(wins.mean() * 100) if len(tf) else None,

@@ -111,6 +111,15 @@ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lg i{display:inline-block;width:12px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
 .more{color:#60a5fa;text-decoration:none;font-weight:600;font-size:13.5px}
 .copied{color:var(--green);font-size:12px;margin-left:8px}
+.funnel{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin:0 0 12px}
+.fh{flex-basis:100%;font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.fs{position:relative;flex:1 1 120px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;
+font-size:12px;color:var(--muted)}.fs b{display:block;font-family:"Space Grotesk";font-size:20px;color:var(--text)}
+.fs:last-child{border-color:rgba(59,130,246,.5);background:rgba(59,130,246,.08)}
+.how-got{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:10px 12px;font-size:13.5px;color:#c7cedb}
+.how-got b{color:#fff}
+#ind-rsi{height:150px}#ind-macd{height:150px}.ind-c{margin-top:14px}
+@media(max-width:600px){.fs{flex:1 1 calc(33% - 6px);padding:6px 8px;font-size:10.5px}.fs b{font-size:17px}}
 .topbar{margin-top:12px}
 @media(max-width:980px){.layout{grid-template-columns:1fr}.side{order:-1}.cards{grid-template-columns:1fr}
 .wl{display:flex;overflow-x:auto;scroll-snap-type:x mandatory}.wl-head{display:none}
@@ -140,7 +149,7 @@ function init(){if(!L)return;var el=$('chart');ch=base(el);
  m50=ln('#f5b942',1.5);m200=ln('#a78bfa',2);
  ch.subscribeCrosshairMove(function(p){var b=p&&p.seriesData?p.seriesData.get(cs):null;legend(b)});
  var t;window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(function(){ch.applyOptions({width:el.clientWidth,height:el.clientHeight});
-  if(rsCh){var r=$('rs');rsCh.applyOptions({width:r.clientWidth})}ch.timeScale().fitContent()},150)});}
+  if(rsCh){var r=$('rs');rsCh.applyOptions({width:r.clientWidth})}if(tab==='ind')drawInd();ch.timeScale().fitContent()},150)});}
 function legend(b){var d=A.data[cur];if(!d)return;var l=d.c[d.c.length-1];
  var x=b?[b.open,b.high,b.low,b.close]:[l[1],l[2],l[3],l[4]];
  $('ohlc').innerHTML='O <b>'+f(x[0])+'</b>H <b>'+f(x[1])+'</b>L <b>'+f(x[2])+'</b>C <b>'+f(x[3])+'</b>'+
@@ -159,17 +168,30 @@ function drawRS(){var d=A.data[cur],el=$('rs');if(!L||!el)return;if(rsCh){rsCh.r
  var b=rsCh.addBaselineSeries({baseValue:{type:'price',price:100},topLineColor:'#22c55e',topFillColor1:'rgba(34,197,94,0.25)',topFillColor2:'rgba(34,197,94,0.02)',
   bottomLineColor:'#ef4444',bottomFillColor1:'rgba(239,68,68,0.02)',bottomFillColor2:'rgba(239,68,68,0.25)',lineWidth:2,priceLineVisible:false});
  b.setData(d.rs.slice(-tf).map(function(x){return{time:x[0],value:x[1]}}));rsCh.timeScale().fitContent();}
-function select(s){cur=s;['head','sig','plan','about'].forEach(function(k){var t=$('t-'+k+'-'+s);$('p-'+k).innerHTML=t?t.innerHTML:''});
+var indC=[];
+function drawInd(){indC.forEach(function(c){c.remove()});indC=[];var d=A.data[cur];if(!L||!d.rsi){$('ind-rsi').innerHTML='';$('ind-macd').innerHTML='';return}
+ var cut=function(a){return a.slice(-tf).map(function(x){return{time:x[0],value:x[1]}})};
+ var r=base($('ind-rsi'));var rl=r.addLineSeries({color:'#a78bfa',lineWidth:1.5,priceLineVisible:false});rl.setData(cut(d.rsi));
+ rl.createPriceLine({price:70,color:'rgba(239,68,68,0.6)',lineStyle:2,lineWidth:1,axisLabelVisible:true,title:''});
+ rl.createPriceLine({price:50,color:'rgba(148,163,184,0.5)',lineStyle:2,lineWidth:1,axisLabelVisible:false,title:''});
+ rl.createPriceLine({price:30,color:'rgba(34,197,94,0.6)',lineStyle:2,lineWidth:1,axisLabelVisible:true,title:''});
+ r.timeScale().fitContent();indC.push(r);
+ var m=base($('ind-macd'));var h=m.addHistogramSeries({priceLineVisible:false,lastValueVisible:false});
+ h.setData(d.macdh.slice(-tf).map(function(x){return{time:x[0],value:x[1],color:x[1]>=0?'rgba(34,197,94,0.5)':'rgba(239,68,68,0.5)'}}));
+ var ml=m.addLineSeries({color:'#3b82f6',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false});ml.setData(cut(d.macd));
+ var ms=m.addLineSeries({color:'#f5b942',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false});ms.setData(cut(d.macds));
+ m.timeScale().fitContent();indC.push(m);}
+function select(s){cur=s;['head','sig','plan','about','ind'].forEach(function(k){var t=$('t-'+k+'-'+s);$('p-'+k).innerHTML=t?t.innerHTML:''});
  document.querySelectorAll('.wl-row').forEach(function(r){r.classList.toggle('on',r.dataset.s===s)});
  $('tab-plan').style.display=A.data[s].index?'none':'';if(A.data[s].index&&tab==='plan')setTab('sig');
- draw();if(tab==='rs')drawRS();}
+ draw();if(tab==='rs')drawRS();if(tab==='ind')drawInd();}
 function setTab(t){tab=t;document.querySelectorAll('.tab').forEach(function(b){b.classList.toggle('on',b.dataset.t===t)});
- document.querySelectorAll('.tp').forEach(function(p){p.classList.toggle('on',p.id==='tp-'+t)});if(t==='rs')drawRS();}
+ document.querySelectorAll('.tp').forEach(function(p){p.classList.toggle('on',p.id==='tp-'+t)});if(t==='rs')drawRS();if(t==='ind')drawInd();}
 document.querySelectorAll('.wl-row').forEach(function(r){r.addEventListener('click',function(){select(r.dataset.s);
  if(window.innerWidth<980)$('mainpanel').scrollIntoView({behavior:'smooth'})})});
 document.querySelectorAll('.tab').forEach(function(b){b.addEventListener('click',function(){setTab(b.dataset.t)})});
 document.querySelectorAll('[data-tf]').forEach(function(b){b.addEventListener('click',function(){tf=+b.dataset.tf;
- document.querySelectorAll('[data-tf]').forEach(function(x){x.classList.toggle('on',x===b)});draw();if(tab==='rs')drawRS()})});
+ document.querySelectorAll('[data-tf]').forEach(function(x){x.classList.toggle('on',x===b)});draw();if(tab==='rs')drawRS();if(tab==='ind')drawInd()})});
 document.querySelectorAll('[data-opt]').forEach(function(b){b.addEventListener('click',function(){var k=b.dataset.opt;opt[k]=opt[k]?0:1;
  b.classList.toggle('on',!!opt[k]);draw()})});
 init();select(A.order[0]);
@@ -194,9 +216,8 @@ def _chg(c: list) -> tuple[float, float]:
     return last, (last / prev - 1) * 100
 
 
-def _logo(sym: str, domain: str, cls: str = "clogo") -> str:
-    img = (f'<img alt="" loading="lazy" src="https://www.google.com/s2/favicons?domain={esc(domain)}&amp;sz=128" '
-           f'onerror="this.remove()">') if domain else ""
+def _logo(sym: str, logo: str, cls: str = "clogo") -> str:
+    img = f'<img alt="" src="{logo}">' if logo else ""
     return f'<span class="{cls}">{esc(sym[:2])}{img}</span>'
 
 
@@ -232,7 +253,7 @@ def _plan(w, watch: bool, pick=None) -> str:
 def _templates(w, d: dict, watch: bool, pick=None) -> str:
     last, chg = _chg(d["c"])
     brands = "".join(f"<span>{esc(b)}</span>" for b in w.brands)
-    head = (f'{_logo(w.symbol, w.domain)}<div class="sid"><div class="sym">{esc(w.symbol)}<small>NSE</small></div>'
+    head = (f'{_logo(w.symbol, w.logo)}<div class="sid"><div class="sym">{esc(w.symbol)}<small>NSE</small></div>'
             f'<div class="co">{esc(w.company)}</div></div>'
             f'<div class="px"><b>{inr(last, 2)}</b><span class="{"up" if chg >= 0 else "dn"}">{chg:+.2f}% today</span></div>'
             f'<span class="vd {esc(w.overall)}">{esc(VERDICT.get(w.overall, (w.overall,))[0])}</span>'
@@ -243,10 +264,20 @@ def _templates(w, d: dict, watch: bool, pick=None) -> str:
              + f'<div class="risk">{esc(w.risk)}</div>')
     sid = esc(w.symbol)
     n_buy = sum(1 for r in w.signals if r[2] == "BUY")
-    sig = (f'<p class="meta" style="margin:0 0 8px">{n_buy} of {len(w.signals)} indicators say BUY. '
-           f'{esc(VERDICT.get(w.overall, ("", ""))[1])}.</p>' + _signal_table(w.signals))
+    n_stock = len(w.signals) - 1
+    n_pass = sum(1 for r in w.signals[1:-1] if r[2] == "BUY")
+    sig = (f'<div class="how-got"><b>How {esc(w.symbol)} got on the radar</b><br>'
+           f'Passed {n_pass} of {n_stock - 1} trend checks and ranks <b>#{w.rank}</b> by momentum '
+           f'(its rise over 3, 6 and 12 months against all Nifty 100 stocks). '
+           f'{esc(VERDICT.get(w.overall, ("", ""))[1])}.</div>'
+           f'<p class="meta" style="margin:10px 0 8px">These are the rules Momentum Radar actually uses '
+           f'({n_buy} of {len(w.signals)} say BUY).</p>' + _signal_table(w.signals))
+    ind_t = (f'<p class="meta" style="margin:0 0 8px"><b>{w.second_agree} of {len(w.second)}</b> popular indicators agree '
+             'with BUY. These are a second opinion for checking: they are not part of the tested rules.</p>'
+             + _signal_table(w.second))
     return (f'<template id="t-head-{sid}">{head}</template><template id="t-sig-{sid}">{sig}</template>'
-            f'<template id="t-plan-{sid}">{_plan(w, watch, pick)}</template><template id="t-about-{sid}">{about}</template>')
+            f'<template id="t-plan-{sid}">{_plan(w, watch, pick)}</template><template id="t-about-{sid}">{about}</template>'
+            f'<template id="t-ind-{sid}">{ind_t}</template>')
 
 
 def _nifty_templates(d: dict, regime_on: bool) -> str:
@@ -268,7 +299,8 @@ def _nifty_templates(d: dict, regime_on: bool) -> str:
     about = ('<p class="about">The Nifty 50 is the index of India\'s 50 biggest companies. When it is in an uptrend, most '
              'stocks rise with it. When it is weak, even strong stocks tend to fall, so Momentum Radar waits.</p>')
     return (f'<template id="t-head-NIFTY">{head}</template><template id="t-sig-NIFTY">{sig}</template>'
-            f'<template id="t-plan-NIFTY"></template><template id="t-about-NIFTY">{about}</template>')
+            f'<template id="t-plan-NIFTY"></template><template id="t-about-NIFTY">{about}</template>'
+            '<template id="t-ind-NIFTY"><p class="meta">Second-opinion indicators are shown for stocks only.</p></template>')
 
 
 def build_dashboard_html(ctx: dict, cfg: dict) -> str:
@@ -307,6 +339,14 @@ def build_dashboard_html(ctx: dict, cfg: dict) -> str:
     status = (f'<div class="status {tone}"><span class="big">{esc(big)}</span><span class="txt">{esc(txt)}</span>'
               f'<span class="pill"><i class="dot {"g" if regime_on else "r"}"></i>Market {"strong" if regime_on else "weak"}</span>'
               f'<span class="pill">Next check-in {checkin_day:%a %d %b}</span><span class="pill">Prices {data_day:%d %b %Y}</span></div>')
+    fn = ctx.get("funnel")
+    funnel = ""
+    if fn:
+        steps = [(fn["scanned"], "Nifty 100 stocks scanned"), (fn["uptrend"], "in a healthy uptrend"),
+                 (fn["momentum"], "in the top 30% for momentum"), (fn["both"], "pass both"),
+                 (fn["top"], "on the watchlist"), (fn["buy"], "to buy" if fn["market_on"] else "to buy (market weak)")]
+        funnel = ('<div class="funnel"><span class="fh">How today&#39;s radar was built</span>'
+                  + "".join(f'<span class="fs"><b>{n}</b>{esc(t)}</span>' for n, t in steps) + "</div>")
     banner = ""
     if failed:
         banner = (f'<div class="banner red"><span class="big">{FAILED_BANNER}</span>'
@@ -333,8 +373,7 @@ def build_dashboard_html(ctx: dict, cfg: dict) -> str:
         tape.append(f'<span class="ti"><b>{esc(w.symbol)}</b>{inr(last, 2, symbol=False)} '
                     f'<span class="{"up" if chg >= 0 else "dn"}">{chg:+.2f}%</span></span>')
         sub = w.brands[0] if w.brands else w.company
-        img = (f'<img alt="" loading="lazy" src="https://www.google.com/s2/favicons?domain={esc(w.domain)}&amp;sz=64">'
-               if w.domain else f"<i>{esc(w.symbol[:2])}</i>")
+        img = f'<img alt="" src="{w.logo}">' if w.logo else f"<i>{esc(w.symbol[:2])}</i>"
         wl.append(f'<div class="wl-row" data-s="{esc(w.symbol)}"><span class="wl-sym">{img}<span><b>{w.rank}. {esc(w.symbol)}</b>'
                   f'<em>{esc(sub)}</em></span></span><span>{inr(last, 2, symbol=False)}</span>'
                   f'<span class="{"up" if chg >= 0 else "dn"}">{chg:+.2f}%</span><span class="mini {esc(w.overall)}">{esc(w.overall)}</span></div>')
@@ -352,9 +391,13 @@ def build_dashboard_html(ctx: dict, cfg: dict) -> str:
             '<button class="tb tog on" data-opt="ma50">MA 50</button><button class="tb tog on" data-opt="ma200">MA 200</button>'
             '<button class="tb tog on" data-opt="vol">Volume</button><button class="tb tog on" data-opt="plan">Buy / Stop / Target</button></div>'
             '<div class="ohlc" id="ohlc"></div><div id="chart"></div>'
-            '<div class="tabs"><button class="tab on" data-t="sig">Signals</button><button class="tab" id="tab-plan" data-t="plan">Plan</button>'
+            '<div class="tabs"><button class="tab on" data-t="sig">Radar rules</button><button class="tab" data-t="ind">Indicators</button>'
+            '<button class="tab" id="tab-plan" data-t="plan">Plan</button>'
             '<button class="tab" data-t="rs">vs Nifty</button><button class="tab" data-t="about">About</button></div>'
-            '<div class="tp on" id="tp-sig"><div id="p-sig"></div></div><div class="tp" id="tp-plan"><div id="p-plan"></div></div>'
+            '<div class="tp on" id="tp-sig"><div id="p-sig"></div></div>'
+            '<div class="tp" id="tp-ind"><div id="p-ind"></div><div class="ind-c"><div class="tl">RSI (14): above 70 stretched, below 50 weak</div>'
+            '<div id="ind-rsi"></div><div class="tl" style="margin-top:10px">MACD (12, 26, 9): bars above zero = rising momentum</div>'
+            '<div id="ind-macd"></div></div></div><div class="tp" id="tp-plan"><div id="p-plan"></div></div>'
             '<div class="tp" id="tp-rs"><p class="meta" style="margin:0 0 6px">Above 100 = beating the Nifty 50 over this period.</p>'
             '<div id="rs"></div></div><div class="tp" id="tp-about"><div id="p-about"></div></div></section>') if order else ""
     layout = f'<div class="layout">{main}{side}</div>' if order else '<p class="muted">No data.</p>'
@@ -388,7 +431,7 @@ def build_dashboard_html(ctx: dict, cfg: dict) -> str:
     notes_html = ('<details class="notes" style="margin-top:16px"><summary>Notes</summary><ul class="small muted">'
                   + "".join(f"<li>{n}</li>" for n in notes) + "</ul></details>")
 
-    body = (f"{status}{banner}{layout}<div class=\"cards\">{proof}{hold}{how}</div>{notes_html}"
+    body = (f"{status}{banner}{funnel}{layout}<div class=\"cards\">{proof}{hold}{how}</div>{notes_html}"
             f'<div class="small muted" style="margin-top:10px">Updated {ctx["generated"]:%d %b %Y, %I:%M %p} IST</div>'
             + "".join(tpl))
     app = {"order": order, "data": {}, "equity": (st or {}).get("equity_weekly")}

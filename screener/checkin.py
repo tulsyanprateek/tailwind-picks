@@ -88,6 +88,9 @@ class Why:
     signals: list = field(default_factory=list)   # (indicator, reading, BUY/HOLD/SELL/WAIT, meaning)
     overall: str = ""                             # BUY, HOLD, SELL or WAIT
     levels: dict = field(default_factory=dict)    # buy, stop, aim, qty, amount
+    second: list = field(default_factory=list)    # second-opinion indicators (not used for picking)
+    second_agree: int = 0
+    logo: str = ""                                # embedded logo image (data URI)
 
 
 def load_brands(cfg: dict) -> dict[str, tuple[str, list[str]]]:

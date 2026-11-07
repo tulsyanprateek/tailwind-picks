@@ -55,3 +55,30 @@ def get_profile(symbol: str, cfg: dict) -> dict:
         log.warning("%s: company profile not available (%s)", symbol, exc)
         return cached or {"name": symbol, "sector": "", "industry": "", "market_cap": None,
                           "website": "", "summary": "", "fetched": ""}
+
+
+def get_logo(domain: str, cfg: dict) -> str:
+    """Company logo as an embedded data URI (downloaded once and cached), or "" if none."""
+    import base64
+
+    import requests
+
+    if not domain:
+        return ""
+    folder = cfg["paths"]["cache_dir"] / "logos"
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{re.sub(r'[^A-Za-z0-9_.-]', '_', domain)}.png"
+    miss = path.with_suffix(".none")
+    if not path.exists() and not miss.exists():
+        try:
+            r = requests.get(f"https://www.google.com/s2/favicons?domain={domain}&sz=64", timeout=15)
+            if r.status_code == 200 and r.headers.get("content-type", "").startswith("image/") and len(r.content) > 200:
+                path.write_bytes(r.content)
+            else:
+                miss.write_text("no logo", encoding="utf-8")
+        except Exception as exc:
+            log.warning("%s: logo not available (%s)", domain, exc)
+            return ""
+    if path.exists():
+        return "data:image/png;base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+    return ""
