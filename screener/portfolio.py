@@ -79,8 +79,12 @@ def simulate(panels: Panels, ohlc: OHLC, cfg: dict, start: pd.Timestamp, end: pd
 
     start_i = int(np.searchsorted(cal.values, np.datetime64(start)))
     end_i = int(np.searchsorted(cal.values, np.datetime64(end), side="right")) - 1
-    rebal = {i for i in rebalance_indices(cal, cfg["schedule"]["rebalance_days_of_month"])
-             if start_i <= i <= end_i and i >= 1}
+    if cfg["schedule"].get("mode", "twice_monthly") == "daily":
+        rebal = set(range(max(start_i, 1), end_i + 1))
+        keep_rank = cfg["schedule"].get("daily_keep_if_rank_within", keep_rank)
+    else:
+        rebal = {i for i in rebalance_indices(cal, cfg["schedule"]["rebalance_days_of_month"])
+                 if start_i <= i <= end_i and i >= 1}
 
     cash = float(pcfg["capital"])
     held: list[Position] = []

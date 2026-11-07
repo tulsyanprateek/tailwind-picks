@@ -8,22 +8,42 @@ from __future__ import annotations
 import json
 import sys
 import time
+from datetime import date, timedelta
 
 import pandas as pd
 
+from screener import notify
 from screener.checkin import (check_holdings, is_checkin_session, load_open_trades, make_pick,
                               next_checkin, next_weekday)
 from screener.config import load_config
 from screener.data import load_prices, load_universe
 from screener.fundamentals import evaluate, load_fundamentals, load_results_calendar
-from screener.report_scan import build_report_html, candidates_json
+from screener.report_scan import build_report_html, candidates_json, phone_message
 from screener.signals import build_panels, compute_symbol_signals, ranked_eligible, regime_series, trading_calendar
 from screener.utils import now_ist, setup_logging
 
 
+def _last_weekday_before(d: date) -> date:
+    d -= timedelta(days=1)
+    while d.weekday() >= 5:
+        d -= timedelta(days=1)
+    return d
+
+
 def main() -> int:
+    """Run the scan; on any crash, still try to tell the phone."""
     cfg = load_config()
     log = setup_logging(cfg["paths"]["log_dir"], "scan")
+    try:
+        return run(cfg, log)
+    except Exception as exc:
+        log.exception("Scan failed")
+        notify.send(cfg, f"Stock check FAILED tonight: {type(exc).__name__}: {exc}. "
+                         "See logs/scan.log on the computer.")
+        return 1
+
+
+def run(cfg: dict, log) -> int:
     t0 = time.time()
     out_dir = cfg["paths"]["output_dir"]
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -70,10 +90,24 @@ def main() -> int:
     if index_df.index[-1] < data_ts:
         notes.append(f"Nifty 50 index data ends {index_df.index[-1]:%d %b}; market filter uses that day.")
 
-    next_session = next_weekday(data_day)
+    # The next session follows the last completed weekday, even if Yahoo has not published
+    # today's prices yet (NSE holidays are not known).
+    now = now_ist()
+    hh, mm = (int(x) for x in cfg["prices"]["session_complete_time_ist"].split(":"))
+    if now.weekday() < 5 and (now.hour, now.minute) >= (hh, mm):
+        last_done = now.date()
+    else:
+        last_done = _last_weekday_before(now.date())
+    ref_day = max(data_day, last_done)
+    phone_notes = []
+    if data_day < ref_day:
+        msg = f"Prices for {ref_day:%d %b} are not available yet; this report uses {data_day:%d %b}."
+        notes.append(msg)
+        phone_notes.append(msg)
+    next_session = next_weekday(ref_day)
     days = cfg["schedule"]["rebalance_days_of_month"]
-    checkin_next = is_checkin_session(data_day, next_session, days)
-    checkin_day = next_session if checkin_next else next_checkin(data_day, days)
+    checkin_next = is_checkin_session(ref_day, next_session, days)
+    checkin_day = next_session if checkin_next else next_checkin(ref_day, days)
 
     ftable, fwarn = load_fundamentals(cfg)
     if fwarn:
@@ -121,9 +155,13 @@ def main() -> int:
     ctx = {"generated": now_ist(), "data_date": data_day, "next_checkin": checkin_day,
            "checkin_next": checkin_next, "regime_on": regime_on, "backtest_status": status,
            "picks": picks, "holdings": holdings, "next_in_line": next_in_line,
-           "skipped_quality": skipped, "watch_when_off": ranked_any[:5], "notes": notes}
+           "skipped_quality": skipped, "watch_when_off": ranked_any[:5], "notes": notes,
+           "phone_notes": phone_notes}
     (out_dir / "report.html").write_text(build_report_html(ctx, cfg), encoding="utf-8")
     (out_dir / "candidates.json").write_text(candidates_json(ctx), encoding="utf-8")
+    text = phone_message(ctx)
+    log.info("Phone message:\n%s", text)
+    notify.send(cfg, text, out_dir / "report.html")
 
     log.info("Data up to %s. Market filter %s. Next check-in %s%s.", data_day,
              "ON" if regime_on else "OFF", checkin_day, " (tomorrow)" if checkin_next else "")

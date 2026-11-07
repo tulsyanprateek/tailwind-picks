@@ -243,6 +243,39 @@ def build_report_html(ctx: dict, cfg: dict) -> str:
     return html.replace("</style>", SCAN_CSS + "</style>", 1)
 
 
+def phone_message(ctx: dict) -> str:
+    """Short plain-text summary for Telegram."""
+    st = ctx["backtest_status"]
+    lines = [f"Stock check, prices to {ctx['data_date']:%a %d %b}"]
+    if st is not None and not st["passed"]:
+        lines.append("WARNING: STRATEGY FAILED OUT OF SAMPLE. Do not trade it.")
+    lines.append("Market: " + ("ON" if ctx["regime_on"] else "OFF, stay in cash"))
+    stops = [h for h in ctx["holdings"] if h.action == "STOP HIT"]
+    for h in stops:
+        lines.append(f"Stop loss hit: {h.symbol}. Check Kite sold it, then remove it from open_trades.csv.")
+    if ctx["checkin_next"]:
+        lines.append(f"CHECK-IN tomorrow ({ctx['next_checkin']:%a %d %b}), before 9:15 am:")
+        acts = 0
+        for h in ctx["holdings"]:
+            if h.action == "SELL":
+                lines.append(f"  SELL {h.symbol} {h.qty} at open, cancel its GTT")
+                acts += 1
+            elif h.new_stop:
+                lines.append(f"  RAISE stop {h.symbol} to {h.new_stop:.2f}")
+                acts += 1
+        if ctx["regime_on"]:
+            for p in ctx["picks"]:
+                lines.append(f"  BUY {p.symbol} {p.qty} @ limit {p.limit:.2f}, then GTT stop {p.stop:.2f}")
+                acts += 1
+        if not acts:
+            lines.append("  Nothing to change.")
+    elif not stops:
+        lines.append(f"No action. Next check-in {ctx['next_checkin']:%a %d %b}.")
+    for n in ctx.get("phone_notes", []):
+        lines.append(n)
+    return "\n".join(lines)
+
+
 def candidates_json(ctx: dict) -> str:
     def pick(pk: Pick) -> dict:
         return {"symbol": pk.symbol, "company": pk.company, "rank": pk.rank, "qty": pk.qty,

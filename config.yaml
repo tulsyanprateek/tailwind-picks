@@ -57,6 +57,18 @@ prices:
 # orders are placed at the open of the check-in day.
 schedule:
   rebalance_days_of_month: [1, 15]
+  # "twice_monthly" (default) or "daily". Tested on 2014 to 2020 only: daily trading
+  # (keep while in the top 20) made 13.3% a year with 259 trades, against 17.2% a year
+  # with 144 trades for twice monthly. Daily means MORE trading, so it is not used.
+  # The report still runs every evening to check stop losses and the market filter.
+  mode: twice_monthly
+  daily_keep_if_rank_within: 20
+
+# Telegram message to your phone after each run. Put the bot token and chat id in
+# secrets.yaml (never in this file). See README, "Phone messages".
+telegram:
+  enabled: true
+  send_report_file: true      # attach report.html so it opens on the phone
 
 # Filters. Each can be switched off (the backtest also shows results without them).
 modules:

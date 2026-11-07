@@ -8,3 +8,4 @@ data/cache/
 data/open_trades.csv
 data/fundamentals.csv
 data/results_calendar.csv
+secrets.yaml

@@ -68,6 +68,18 @@ def test_report_shows_failed_banner_when_backtest_failed(cfg):
     assert "—" not in html
 
 
+def test_phone_message_is_short_and_says_what_to_do(cfg):
+    from screener.report_scan import phone_message
+    ctx = _ctx({"passed": True, "reasons": [], "oos_expectancy_inr": 2300.0})
+    text = phone_message(ctx)
+    assert "No action. Next check-in Mon 16 Nov." in text
+    ctx = _ctx({"passed": False, "reasons": [], "oos_expectancy_inr": -1.0})
+    ctx["checkin_next"] = True
+    text = phone_message(ctx)
+    assert "FAILED" in text and "CHECK-IN tomorrow" in text and "Nothing to change." in text
+    assert len(text.splitlines()) < 10
+
+
 def test_report_has_no_failed_banner_when_backtest_passed(cfg):
     ok = {"passed": True, "reasons": [], "oos_expectancy_inr": 2300.0}
     html = build_report_html(_ctx(ok), cfg)

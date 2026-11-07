@@ -43,6 +43,19 @@ pip install -r requirements.txt
 The first run downloads about 14 years of daily prices (about 2 minutes). Later runs only
 download the new days. Prices are cached in `data/cache/`.
 
+## Automatic daily run and phone messages (one-time setup, about 5 minutes)
+
+1. **Telegram:** in Telegram, open @BotFather, send `/newbot` and follow the steps. Then run
+   `python telegram_setup.py` and follow what it says. The token is saved in `secrets.yaml`
+   on this computer only (never in git).
+2. **Daily run at 6 pm:** run once
+   `powershell -ExecutionPolicy Bypass -File setup_daily_run.ps1`
+   If the computer is off at 6 pm, it runs when the computer is next on.
+
+Every evening your phone then gets a short message ("No action", or exactly what to buy or
+sell before 9:15 am the next morning) with the full report attached. Stocks only change at
+the check-ins on the 1st and 15th; the daily run watches stop losses and the market filter.
+
 ## Every two weeks (about 15 minutes)
 
 Check-ins are on the first trading day on or after the 1st and the 15th of each month.
