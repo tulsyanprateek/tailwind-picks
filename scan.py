@@ -156,7 +156,8 @@ def run(cfg: dict, log) -> int:
            "checkin_next": checkin_next, "regime_on": regime_on, "backtest_status": status,
            "picks": picks, "holdings": holdings, "next_in_line": next_in_line,
            "skipped_quality": skipped, "watch_when_off": ranked_any[:5], "notes": notes,
-           "phone_notes": phone_notes}
+           "phone_notes": phone_notes,
+           "top_list": list(enumerate(ranked[:cfg["portfolio"]["keep_if_rank_within"]], 1))}
     (out_dir / "report.html").write_text(build_report_html(ctx, cfg), encoding="utf-8")
     (out_dir / "candidates.json").write_text(candidates_json(ctx), encoding="utf-8")
     text = phone_message(ctx)

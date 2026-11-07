@@ -1,0 +1,56 @@
+# Runs the stock check every weekday at 6 pm IST in GitHub's cloud (free) and publishes
+# the report as a web page from the docs/ folder (GitHub Pages).
+name: Daily stock check
+
+on:
+  schedule:
+    - cron: "30 12 * * 1-5"   # 12:30 UTC = 6:00 pm IST, Monday to Friday
+  workflow_dispatch:           # "Run workflow" button for a manual run
+
+permissions:
+  contents: write              # to save the new report into docs/
+
+concurrency:
+  group: daily-stock-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SCREENER_OUTPUT_DIR: docs
+      TZ: Asia/Kolkata
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - name: Restore cached prices
+        uses: actions/cache@v4
+        with:
+          path: data/cache
+          key: prices-${{ github.run_id }}
+          restore-keys: prices-
+
+      - name: 12-year test
+        run: python backtest.py
+
+      - name: Today's check
+        run: python scan.py
+
+      - name: Publish
+        run: |
+          cp docs/report.html docs/index.html
+          touch docs/.nojekyll
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs
+          git commit -m "Report for $(date +%Y-%m-%d)" || echo "No change"
+          git push

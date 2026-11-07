@@ -9,31 +9,35 @@ import pandas as pd
 from .utils import inr
 
 CSS = """
-:root{--bg:#0f1115;--panel:#171a21;--panel2:#1d212a;--line:#2a2f3a;--text:#e7e9ee;--muted:#9aa3b2;
---green:#3fbf7f;--green-bg:#123524;--red:#ff5d5d;--red-bg:#3a1414;--amber:#f5b942;--amber-bg:#3a2d10;
---blue:#6aa8ff;--grey:#7d8696}
+:root{--bg:#070b14;--panel:rgba(255,255,255,.04);--panel2:rgba(255,255,255,.07);--line:rgba(255,255,255,.09);
+--text:#eef1f7;--muted:#97a0b3;--green:#34d399;--green-bg:rgba(52,211,153,.12);--red:#fb7185;--red-bg:rgba(251,113,133,.12);
+--amber:#fbbf24;--amber-bg:rgba(251,191,36,.12);--blue:#60a5fa;--violet:#a78bfa;--grey:#7d8696}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);
-font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.wrap{max-width:980px;margin:0 auto;padding:16px}
-h1{font-size:22px;margin:4px 0 2px}h2{font-size:18px;margin:28px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+html,body{margin:0;color:var(--text);
+font:15px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+-webkit-font-smoothing:antialiased}
+html{background:var(--bg)}
+body{background:radial-gradient(1200px 520px at 15% -10%,rgba(96,165,250,.16),transparent 60%),
+radial-gradient(900px 480px at 100% 0%,rgba(167,139,250,.14),transparent 55%),var(--bg);min-height:100vh}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 28px}
+h1{font-size:24px;margin:4px 0 2px;letter-spacing:-.02em}h2{font-size:18px;margin:30px 0 12px;letter-spacing:-.01em}h3{font-size:15px;margin:16px 0 6px}
 .muted{color:var(--muted)}.small{font-size:13px}
-.banner{border-radius:10px;padding:14px 16px;margin:12px 0;font-weight:600}
+.banner{border-radius:16px;padding:14px 16px;margin:12px 0;font-weight:600}
 .banner.red{background:var(--red-bg);border:1px solid var(--red);color:#ffd6d6}
 .banner.green{background:var(--green-bg);border:1px solid var(--green);color:#d4f5e4}
 .banner.amber{background:var(--amber-bg);border:1px solid var(--amber);color:#fbe6b8}
 .banner .big{font-size:20px;display:block;margin-bottom:4px}
 .banner p{margin:6px 0 0;font-weight:400}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(6px);padding:14px 16px;margin:12px 0}
 .badge{display:inline-block;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600}
 .badge.green{background:var(--green-bg);color:var(--green)}.badge.red{background:var(--red-bg);color:var(--red)}
 .badge.amber{background:var(--amber-bg);color:var(--amber)}
-.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:10px}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
 table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
 th,td{padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
 th:first-child,td:first-child{text-align:left}
-thead th{background:var(--panel2);color:var(--muted);font-weight:600;position:sticky;top:0}
-td.hl,th.hl{background:#1b2533}
+thead th{background:#111827;color:var(--muted);font-weight:600;position:sticky;top:0}
+td.hl,th.hl{background:rgba(96,165,250,.10)}
 .pos{color:var(--green)}.neg{color:var(--red)}
 .kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
 .kv div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--line);padding:3px 0}
@@ -42,8 +46,8 @@ td.hl,th.hl{background:#1b2533}
 svg text{fill:var(--muted);font-size:14px}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
 .legend i{display:inline-block;width:12px;height:3px;vertical-align:middle;margin-right:5px}
-button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;
-padding:8px 14px;font-size:14px;cursor:pointer}
+button{background:linear-gradient(135deg,var(--blue),var(--violet));color:#0b1020;border:0;border-radius:10px;
+padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer}
 button:active{transform:translateY(1px)}
 ul{padding-left:20px}li{margin:3px 0}
 footer{margin:32px 0 12px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:12px}

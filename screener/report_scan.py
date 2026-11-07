@@ -11,23 +11,53 @@ from .utils import inr, pct
 FAILED_BANNER = "STRATEGY FAILED OUT OF SAMPLE"
 
 SCAN_CSS = """
-.top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 4px}
-.todo{background:var(--panel);border:2px solid var(--blue);border-radius:12px;padding:14px 16px;margin:14px 0}
-.todo h2{margin:0 0 8px;font-size:18px}
-.todo ol{margin:6px 0 0;padding-left:22px}.todo li{margin:6px 0}
-.pick{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}
+.hero{position:relative;border-radius:22px;padding:22px 20px 18px;margin:4px 0 16px;overflow:hidden;
+background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid var(--line)}
+.hero:before{content:"";position:absolute;inset:0;border-radius:22px;padding:1px;pointer-events:none;
+background:linear-gradient(135deg,var(--accent,#60a5fa),transparent 55%);
+-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.hero.green{--accent:#34d399}.hero.red{--accent:#fb7185}.hero.blue{--accent:#60a5fa}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.headline{font-size:clamp(30px,8vw,44px);line-height:1.05;margin:8px 0 8px;font-weight:800;letter-spacing:-.03em;
+background:linear-gradient(90deg,#fff,var(--accent,#60a5fa));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{margin:0 0 10px;color:#d6dbe6;font-size:16px}
+.steps{margin:8px 0 12px;padding-left:22px}.steps li{margin:6px 0;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:6px 11px;border-radius:999px;
+background:rgba(255,255,255,.06);border:1px solid var(--line);color:#dfe4ee}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}.dot.g{background:var(--green);box-shadow:0 0 10px var(--green)}
+.dot.r{background:var(--red);box-shadow:0 0 10px var(--red)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:560px){.tiles{grid-template-columns:1fr 1fr}.tiles .tile:first-child{grid-column:1/-1}}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.tl{font-size:12px;color:var(--muted)}.tv{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:2px 0}
+.tv.green{color:var(--green)}.tv.red{color:var(--red)}.tv.amber{color:var(--amber)}.tn{font-size:12px;color:var(--muted)}
+.more{display:inline-block;margin:10px 2px 0;color:var(--blue);text-decoration:none;font-size:14px;font-weight:600}
+h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:30px 0 10px}
+.ranks{display:flex;flex-wrap:wrap;gap:8px}
+.rank{display:inline-flex;align-items:center;gap:8px;padding:7px 12px 7px 7px;border-radius:12px;
+background:var(--panel);border:1px solid var(--line);font-weight:600;font-size:14px}
+.rank b{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;font-size:12px;
+background:linear-gradient(135deg,var(--blue),var(--violet));color:#0b1020}
+.how{display:grid;gap:8px}
+.how div{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);
+border-radius:14px;padding:12px 14px}
+.how b{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;
+background:rgba(96,165,250,.15);color:var(--blue)}
+.notes{margin-top:22px}.notes summary{cursor:pointer;color:var(--muted);font-size:13px}
+.pick{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0}
 .pick .head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
-.pick .sym{font-size:20px;font-weight:700}.pick .co{color:var(--muted);font-size:13px}
+.pick .sym{font-size:22px;font-weight:800;letter-spacing:-.02em}.pick .co{color:var(--muted);font-size:13px}
 .big3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
-.big3 div{background:var(--panel2);border-radius:10px;padding:8px 10px}
-.big3 .l{font-size:12px;color:var(--muted)}.big3 .v{font-size:17px;font-weight:700}
+.big3 div{background:rgba(255,255,255,.04);border-radius:12px;padding:9px 11px}
+.big3 .l{font-size:12px;color:var(--muted)}.big3 .v{font-size:18px;font-weight:800}
 .big3 .v.red{color:var(--red)}.big3 .v.blue{color:var(--blue)}
 @media(max-width:380px){.big3{grid-template-columns:1fr 1fr}}
 .flags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .chk{list-style:none;padding:0;margin:6px 0;font-size:13px}.chk li{margin:2px 0}
 .ok{color:var(--green)}.no{color:var(--red)}
-pre.order{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12.5px;
-white-space:pre-wrap;word-break:break-word;margin:8px 0}
+pre.order{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12.5px;
+white-space:pre-wrap;word-break:break-word;margin:10px 0}
 details{margin:8px 0}summary{cursor:pointer;color:var(--muted);font-size:13px}
 .spark{display:block;width:100%;height:auto;margin:6px 0}
 .copied{color:var(--green);font-size:13px;margin-left:8px}
@@ -139,105 +169,145 @@ def build_report_html(ctx: dict, cfg: dict) -> str:
     picks: list[Pick] = ctx["picks"]
     holdings: list[HoldingCheck] = ctx["holdings"]
 
-    badges = [_badge("Market filter ON" if regime_on else "Market filter OFF", "green" if regime_on else "red")]
-    if st is None:
-        badges.append(_badge("Backtest not run yet", "amber"))
-    elif st["passed"]:
-        badges.append(_badge(f"Backtest PASSED: {inr(st['oos_expectancy_inr'])} per trade after costs (2021+)", "green"))
-    else:
-        badges.append(_badge(f"Backtest FAILED: {inr(st['oos_expectancy_inr'])} per trade after costs (2021+)", "red"))
-
-    banners = []
-    if st is not None and not st["passed"]:
-        banners.append(f'<div class="banner red"><span class="big">{FAILED_BANNER}</span>'
-                       f'<p>The backtest shows no edge after costs on 2021+ data '
-                       f'({esc("; ".join(st.get("reasons", [])))}). Do not trade these picks with real money.</p></div>')
-    elif st is None:
-        banners.append('<div class="banner amber"><span class="big">Backtest not run</span>'
-                       '<p>Run <b>python backtest.py</b> first, so you know whether this method has an edge.</p></div>')
-    if not regime_on:
-        banners.append('<div class="banner red"><span class="big">Market filter OFF: no new buys, stay in cash</span>'
-                       '<p>The Nifty 50 is not in an uptrend. At the next check-in, sell all holdings '
-                       'and keep the money in cash until the filter turns ON again.</p></div>')
-
+    failed = st is not None and not st["passed"]
     sells = [h for h in holdings if h.action == "SELL"]
     raises = [h for h in holdings if h.new_stop]
-    if tomorrow_checkin:
-        steps = []
+    keep_n = cfg["portfolio"]["keep_if_rank_within"]
+
+    # ---- hero: the one thing to know today
+    steps: list[str] = []
+    if failed:
+        headline, tone = "Do not trade this", "red"
+        sub = "The 12-year test shows no edge after costs since 2021. The picks below are for information only."
+    elif not regime_on:
+        headline, tone = "Stay in cash", "red"
+        sub = ("The Nifty 50 is not in an uptrend (market filter OFF: no new trades). "
+               + ("At tomorrow's check-in, sell everything you hold." if tomorrow_checkin else
+                  f"No new buys. If it is still OFF on {checkin_day:%a %d %b}, sell everything then."))
+    elif tomorrow_checkin:
+        headline, tone = "Check-in tomorrow", "blue"
+        sub = f"Before 9:15 am on {checkin_day:%A %d %b}:"
         if sells:
-            steps.append("<li><b>Sell</b> at the open: " + ", ".join(esc(h.symbol) for h in sells)
-                         + ". Cancel their GTT orders.</li>")
+            steps.append("Sell " + ", ".join(esc(h.symbol) for h in sells) + " at the open and cancel their GTT.")
         if raises:
-            steps.append("<li><b>Raise the GTT stop loss</b>: " + ", ".join(
-                f"{esc(h.symbol)} to {inr(h.new_stop, 2)}" for h in raises) + ".</li>")
-        if regime_on and picks:
-            steps.append(f"<li><b>Buy</b> {len(picks)} stock{'s' if len(picks) > 1 else ''} with the limit orders "
-                         "below: " + ", ".join(f"{esc(p.symbol)} ({p.qty} shares)" for p in picks) + ".</li>")
-            steps.append("<li>After each buy fills, <b>set its GTT stop loss</b> (in the order text) and add "
-                         "the trade to <b>data/open_trades.csv</b>.</li>")
+            steps.append("Raise the stop loss: " + ", ".join(
+                f"{esc(h.symbol)} to {inr(h.new_stop, 2)}" for h in raises) + ".")
+        if picks:
+            steps.append("Buy " + ", ".join(f"{esc(p.symbol)} ({p.qty})" for p in picks)
+                         + " with the limit orders below.")
+            steps.append("After each buy fills, set its GTT stop loss (in the order text).")
+        if not holdings:
+            steps.append(f"Sell anything you hold that is not in the Top {keep_n} below.")
         if not steps:
-            steps.append("<li>Nothing to buy or sell. Your holdings stay as they are.</li>")
-        todo = (f'<div class="todo"><h2>Check-in on {checkin_day:%A %d %b}: before 9:15 am</h2>'
-                f'<ol>{"".join(steps)}</ol></div>')
+            steps.append("Nothing to change.")
     else:
-        todo = (f'<div class="todo"><h2>No action needed today</h2>'
-                f'<p style="margin:0">Next check-in: <b>{checkin_day:%A %d %b %Y}</b>. Run this report again '
-                f'the evening before. Your GTT stop losses work on their own until then.</p>'
-                + ('<p class="small muted" style="margin:8px 0 0">The list below is a preview of what the '
-                   'check-in would buy if it were tomorrow. Starting fresh? Wait for the check-in.</p>'
-                   if regime_on else "") + '</div>')
+        headline, tone = "No action today", "green"
+        sub = f"Next check-in is {checkin_day:%A %d %b}. Stop losses on Kite work on their own until then."
+    steps_html = ('<ol class="steps">' + "".join(f"<li>{x}</li>" for x in steps) + "</ol>") if steps else ""
 
-    pick_title = "Buy list" if tomorrow_checkin else "Preview: buy list"
+    chips = [f'<span class="chip"><i class="dot {"g" if regime_on else "r"}"></i>Market {"ON" if regime_on else "OFF"}</span>',
+             f'<span class="chip">Next check-in <b>{checkin_day:%a %d %b}</b></span>',
+             f'<span class="chip">Prices to {data_day:%a %d %b}</span>']
+    hero = (f'<header class="hero {tone}"><div class="eyebrow">Nifty 100 Momentum &middot; Check-in report</div>'
+            f'<h1 class="headline">{headline}</h1><p class="sub">{sub}</p>{steps_html}'
+            f'<div class="chips">{"".join(chips)}</div></header>')
+
+    # ---- proof tiles from the 12-year test
+    if st is None:
+        tiles = ('<div class="tile"><div class="tl">12-year test</div><div class="tv amber">Not run</div>'
+                 '<div class="tn">Run python backtest.py</div></div>')
+    else:
+        tiles = (f'<div class="tile"><div class="tl">12-year test</div>'
+                 f'<div class="tv {"red" if failed else "green"}">{"FAILED" if failed else "PASSED"}</div>'
+                 f'<div class="tn">{inr(st["oos_expectancy_inr"])} per trade after costs</div></div>'
+                 f'<div class="tile"><div class="tl">Yearly return since 2021</div>'
+                 f'<div class="tv">{pct(st.get("oos_cagr"), signed=True)}</div>'
+                 f'<div class="tn">Nifty 50: {pct(st.get("nifty_oos_cagr"), signed=True)}</div></div>'
+                 f'<div class="tile"><div class="tl">Worst fall since 2021</div>'
+                 f'<div class="tv red">{pct(st.get("oos_max_dd_pct"))}</div>'
+                 f'<div class="tn">Nifty 50: {pct(st.get("nifty_oos_max_dd_pct"))}</div></div>')
+    tiles_html = (f'<div class="tiles">{tiles}</div>'
+                  '<a class="more" href="backtest.html">See the full 12-year test &rarr;</a>')
+
+    banner = ""
+    if failed:
+        banner = (f'<div class="banner red"><span class="big">{FAILED_BANNER}</span>'
+                  f'<p>{esc("; ".join(st.get("reasons", [])))}. Do not trade these picks with real money.</p></div>')
+
+    # ---- buy list
     if not regime_on:
-        pick_html = "<p>No buys while the market filter is OFF.</p>"
         watch = ctx.get("watch_when_off", [])
+        pick_title = "Watch list"
+        pick_html = '<p class="muted">No buys while the market filter is OFF.</p>'
         if watch:
-            pick_html += ('<p class="small muted">Strongest stocks right now (watch only): '
-                          + ", ".join(esc(s) for s in watch) + "</p>")
-    elif picks:
-        pick_html = "".join(pick_card(pk, k, cfg) for k, pk in enumerate(picks))
+            pick_html += ('<div class="ranks">' + "".join(f'<span class="rank"><b>{k}</b>{esc(s)}</span>'
+                                                      for k, s in enumerate(watch, 1)) + "</div>"
+                          '<p class="small muted">Strongest stocks right now, to watch only.</p>')
     else:
-        pick_html = "<p>No free slots or no qualifying stocks.</p>"
+        pick_title = "Buy list" if tomorrow_checkin else "Buy list (preview)"
+        pick_html = ("".join(pick_card(pk, k, cfg) for k, pk in enumerate(picks)) if picks
+                     else '<p class="muted">No free slots or no qualifying stocks.</p>')
+        if picks and not tomorrow_checkin:
+            pick_html = ('<p class="small muted">What the check-in would buy if it were tomorrow. '
+                         'Starting fresh? Wait for the check-in.</p>') + pick_html
 
-    hold_html = ("".join(holding_card(h) for h in holdings) if holdings else
-                 '<p class="small muted">No holdings recorded. After you buy, add a row to '
-                 '<b>data/open_trades.csv</b>: <code>symbol,buy_date,buy_price,qty,stop_loss</code>, for '
-                 'example <code>TCS,17-11-2026,3450.50,5,2933.00</code>.</p>')
+    # ---- top list and holdings
+    top = ctx.get("top_list", [])
+    top_html = ""
+    if top and regime_on:
+        top_html = (f'<h2 class="sec">Top {keep_n} right now</h2><div class="ranks">'
+                    + "".join(f'<span class="rank"><b>{r}</b>{esc(s)}</span>' for r, s in top) + "</div>"
+                    '<p class="small muted">On a check-in day, keep what you hold if it is in this list '
+                    'and sell it if not.</p>')
+    hold_html = ('<h2 class="sec">Your holdings</h2>' + "".join(holding_card(h) for h in holdings)) if holdings else ""
 
     nxt = ctx.get("next_in_line", [])
     nxt_html = ""
     if nxt and regime_on:
         rows = "".join(f"<tr><td>{r}</td><td>{esc(s)}</td><td>{inr(c, 2)}</td><td>{rp:.0f}</td>"
                        f"<td>{esc(fs)}</td></tr>" for r, s, c, rp, fs in nxt)
-        nxt_html = ('<h2>Next in line</h2><p class="small muted">If a pick above is flagged (results soon, '
-                    'quality fail) and you skip it, these come next.</p><div class="scroll"><table><thead><tr>'
-                    '<th>Rank</th><th>Stock</th><th>Last close</th><th>Momentum pct</th><th>Quality</th>'
+        nxt_html = ('<h2 class="sec">Next in line</h2><p class="small muted">If you skip a pick (results soon, '
+                    'quality fail), use these in order.</p><div class="scroll"><table><thead><tr>'
+                    '<th>Rank</th><th>Stock</th><th>Last close</th><th>Momentum</th><th>Quality</th>'
                     f'</tr></thead><tbody>{rows}</tbody></table></div>')
 
     skipped = ctx.get("skipped_quality", [])
     skip_html = ""
     if skipped:
-        skip_html = ('<h2>Skipped</h2><ul class="small">' + "".join(
+        skip_html = ('<h2 class="sec">Skipped</h2><ul class="small muted">' + "".join(
             f"<li>{esc(s)}: {esc(why)}</li>" for s, why in skipped) + "</ul>")
 
+    p_ = cfg["portfolio"]
+    stop_txt = (f"{cfg['trade']['stop_pct']:g}% below the buy price"
+                if cfg["trade"].get("stop_mode") == "percent" else "2 x the daily range below the buy price")
+    how = ('<h2 class="sec">How it works</h2><div class="how">'
+           f'<div><b>1</b><span>Twice a month (1st and 15th), pick the {p_["holdings"]} Nifty 100 stocks that '
+           'have risen the most over the last year and are still in a steady uptrend.</span></div>'
+           '<div><b>2</b><span>Only when the Nifty 50 itself is rising. When it is not, sell and wait in cash.</span></div>'
+           f'<div><b>3</b><span>Put equal money in each, with a safety-net stop loss {stop_txt}.</span></div>'
+           f'<div><b>4</b><span>At the next check-in, keep what is still in the Top {keep_n} and replace the rest.</span></div>'
+           '</div><p class="small muted">Losing trades are normal: in the test, fewer than half the trades made '
+           'money. It worked because the winners were much bigger than the losers. Nothing here is guaranteed.</p>')
+
     notes = [esc(n) for n in ctx.get("notes", [])]
-    notes.append("The backtest uses today's Nifty 100 members for all years (survivorship bias), so real "
-                 "results are likely worse than the backtest.")
-    notes_html = '<h2>Data notes</h2><ul class="small muted">' + "".join(f"<li>{n}</li>" for n in notes) + "</ul>"
+    notes.append("The 12-year test uses today's Nifty 100 members for all years (survivorship bias), so real "
+                 "results are likely worse than the test.")
+    notes_html = ('<details class="notes"><summary>Data notes</summary><ul class="small muted">'
+                  + "".join(f"<li>{n}</li>" for n in notes) + "</ul></details>")
 
     body = f"""
-<h1>Check-in report</h1>
-<div class="muted small">Prices up to the close of {data_day:%A %d %b %Y}. Generated {ctx["generated"]:%d %b %Y %H:%M} IST.</div>
-<div class="top">{" ".join(badges)}</div>
-{"".join(banners)}
-{todo}
-<h2>{pick_title}</h2>
+{hero}
+{banner}
+{tiles_html}
+<h2 class="sec">{pick_title}</h2>
 {pick_html}
-<h2>Your holdings</h2>
+{top_html}
 {hold_html}
 {nxt_html}
 {skip_html}
+{how}
 {notes_html}
+<div class="small muted" style="margin-top:14px">Updated {ctx["generated"]:%d %b %Y, %I:%M %p} IST</div>
 """
     html = page("Check-in report", body, COPY_JS)
     return html.replace("</style>", SCAN_CSS + "</style>", 1)

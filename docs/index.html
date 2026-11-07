@@ -1,0 +1,114 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Check-in report</title><style>
+:root{--bg:#070b14;--panel:rgba(255,255,255,.04);--panel2:rgba(255,255,255,.07);--line:rgba(255,255,255,.09);
+--text:#eef1f7;--muted:#97a0b3;--green:#34d399;--green-bg:rgba(52,211,153,.12);--red:#fb7185;--red-bg:rgba(251,113,133,.12);
+--amber:#fbbf24;--amber-bg:rgba(251,191,36,.12);--blue:#60a5fa;--violet:#a78bfa;--grey:#7d8696}
+*{box-sizing:border-box}
+html,body{margin:0;color:var(--text);
+font:15px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+-webkit-font-smoothing:antialiased}
+html{background:var(--bg)}
+body{background:radial-gradient(1200px 520px at 15% -10%,rgba(96,165,250,.16),transparent 60%),
+radial-gradient(900px 480px at 100% 0%,rgba(167,139,250,.14),transparent 55%),var(--bg);min-height:100vh}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 28px}
+h1{font-size:24px;margin:4px 0 2px;letter-spacing:-.02em}h2{font-size:18px;margin:30px 0 12px;letter-spacing:-.01em}h3{font-size:15px;margin:16px 0 6px}
+.muted{color:var(--muted)}.small{font-size:13px}
+.banner{border-radius:16px;padding:14px 16px;margin:12px 0;font-weight:600}
+.banner.red{background:var(--red-bg);border:1px solid var(--red);color:#ffd6d6}
+.banner.green{background:var(--green-bg);border:1px solid var(--green);color:#d4f5e4}
+.banner.amber{background:var(--amber-bg);border:1px solid var(--amber);color:#fbe6b8}
+.banner .big{font-size:20px;display:block;margin-bottom:4px}
+.banner p{margin:6px 0 0;font-weight:400}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(6px);padding:14px 16px;margin:12px 0}
+.badge{display:inline-block;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600}
+.badge.green{background:var(--green-bg);color:var(--green)}.badge.red{background:var(--red-bg);color:var(--red)}
+.badge.amber{background:var(--amber-bg);color:var(--amber)}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+thead th{background:#111827;color:var(--muted);font-weight:600;position:sticky;top:0}
+td.hl,th.hl{background:rgba(96,165,250,.10)}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.kv div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--line);padding:3px 0}
+.kv span:first-child{color:var(--muted)}
+@media(max-width:560px){.kv{grid-template-columns:1fr}}
+svg text{fill:var(--muted);font-size:14px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0}
+.legend i{display:inline-block;width:12px;height:3px;vertical-align:middle;margin-right:5px}
+button{background:linear-gradient(135deg,var(--blue),var(--violet));color:#0b1020;border:0;border-radius:10px;
+padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer}
+button:active{transform:translateY(1px)}
+ul{padding-left:20px}li{margin:3px 0}
+footer{margin:32px 0 12px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:12px}
+
+.hero{position:relative;border-radius:22px;padding:22px 20px 18px;margin:4px 0 16px;overflow:hidden;
+background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid var(--line)}
+.hero:before{content:"";position:absolute;inset:0;border-radius:22px;padding:1px;pointer-events:none;
+background:linear-gradient(135deg,var(--accent,#60a5fa),transparent 55%);
+-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.hero.green{--accent:#34d399}.hero.red{--accent:#fb7185}.hero.blue{--accent:#60a5fa}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.headline{font-size:clamp(30px,8vw,44px);line-height:1.05;margin:8px 0 8px;font-weight:800;letter-spacing:-.03em;
+background:linear-gradient(90deg,#fff,var(--accent,#60a5fa));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{margin:0 0 10px;color:#d6dbe6;font-size:16px}
+.steps{margin:8px 0 12px;padding-left:22px}.steps li{margin:6px 0;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:6px 11px;border-radius:999px;
+background:rgba(255,255,255,.06);border:1px solid var(--line);color:#dfe4ee}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}.dot.g{background:var(--green);box-shadow:0 0 10px var(--green)}
+.dot.r{background:var(--red);box-shadow:0 0 10px var(--red)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:560px){.tiles{grid-template-columns:1fr 1fr}.tiles .tile:first-child{grid-column:1/-1}}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.tl{font-size:12px;color:var(--muted)}.tv{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:2px 0}
+.tv.green{color:var(--green)}.tv.red{color:var(--red)}.tv.amber{color:var(--amber)}.tn{font-size:12px;color:var(--muted)}
+.more{display:inline-block;margin:10px 2px 0;color:var(--blue);text-decoration:none;font-size:14px;font-weight:600}
+h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:30px 0 10px}
+.ranks{display:flex;flex-wrap:wrap;gap:8px}
+.rank{display:inline-flex;align-items:center;gap:8px;padding:7px 12px 7px 7px;border-radius:12px;
+background:var(--panel);border:1px solid var(--line);font-weight:600;font-size:14px}
+.rank b{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;font-size:12px;
+background:linear-gradient(135deg,var(--blue),var(--violet));color:#0b1020}
+.how{display:grid;gap:8px}
+.how div{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);
+border-radius:14px;padding:12px 14px}
+.how b{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;
+background:rgba(96,165,250,.15);color:var(--blue)}
+.notes{margin-top:22px}.notes summary{cursor:pointer;color:var(--muted);font-size:13px}
+.pick{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0}
+.pick .head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pick .sym{font-size:22px;font-weight:800;letter-spacing:-.02em}.pick .co{color:var(--muted);font-size:13px}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.big3 div{background:rgba(255,255,255,.04);border-radius:12px;padding:9px 11px}
+.big3 .l{font-size:12px;color:var(--muted)}.big3 .v{font-size:18px;font-weight:800}
+.big3 .v.red{color:var(--red)}.big3 .v.blue{color:var(--blue)}
+@media(max-width:380px){.big3{grid-template-columns:1fr 1fr}}
+.flags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chk{list-style:none;padding:0;margin:6px 0;font-size:13px}.chk li{margin:2px 0}
+.ok{color:var(--green)}.no{color:var(--red)}
+pre.order{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12.5px;
+white-space:pre-wrap;word-break:break-word;margin:10px 0}
+details{margin:8px 0}summary{cursor:pointer;color:var(--muted);font-size:13px}
+.spark{display:block;width:100%;height:auto;margin:6px 0}
+.copied{color:var(--green);font-size:13px;margin-left:8px}
+</style></head><body><div class="wrap">
+<header class="hero red"><div class="eyebrow">Nifty 100 Momentum &middot; Check-in report</div><h1 class="headline">Stay in cash</h1><p class="sub">The Nifty 50 is not in an uptrend (market filter OFF: no new trades). No new buys. If it is still OFF on Mon 16 Nov, sell everything then.</p><div class="chips"><span class="chip"><i class="dot r"></i>Market OFF</span><span class="chip">Next check-in <b>Mon 16 Nov</b></span><span class="chip">Prices to Fri 06 Nov</span></div></header>
+
+<div class="tiles"><div class="tile"><div class="tl">12-year test</div><div class="tv green">PASSED</div><div class="tn">₹2,317 per trade after costs</div></div><div class="tile"><div class="tl">Yearly return since 2021</div><div class="tv">+27.2%</div><div class="tn">Nifty 50: +10.4%</div></div><div class="tile"><div class="tl">Worst fall since 2021</div><div class="tv red">-26.4%</div><div class="tn">Nifty 50: -17.2%</div></div></div><a class="more" href="backtest.html">See the full 12-year test &rarr;</a>
+<h2 class="sec">Watch list</h2>
+<p class="muted">No buys while the market filter is OFF.</p><div class="ranks"><span class="rank"><b>1</b>DIVISLAB</span><span class="rank"><b>2</b>ZYDUSLIFE</span><span class="rank"><b>3</b>BOSCHLTD</span><span class="rank"><b>4</b>TECHM</span><span class="rank"><b>5</b>ETERNAL</span></div><p class="small muted">Strongest stocks right now, to watch only.</p>
+
+
+
+<h2 class="sec">Skipped</h2><ul class="small muted"><li>BOSCHLTD: one share (51,710) costs more than the 20,000 per-stock amount</li></ul>
+<h2 class="sec">How it works</h2><div class="how"><div><b>1</b><span>Twice a month (1st and 15th), pick the 5 Nifty 100 stocks that have risen the most over the last year and are still in a steady uptrend.</span></div><div><b>2</b><span>Only when the Nifty 50 itself is rising. When it is not, sell and wait in cash.</span></div><div><b>3</b><span>Put equal money in each, with a safety-net stop loss 15% below the buy price.</span></div><div><b>4</b><span>At the next check-in, keep what is still in the Top 10 and replace the rest.</span></div></div><p class="small muted">Losing trades are normal: in the test, fewer than half the trades made money. It worked because the winners were much bigger than the losers. Nothing here is guaranteed.</p>
+<details class="notes"><summary>Data notes</summary><ul class="small muted"><li>TMCV: only 245 sessions of history (since 2025-11-12), skipped (needs about a year of prices).</li><li>VAML: only 101 sessions of history (since 2026-06-15), skipped (needs about a year of prices).</li><li>No fundamentals file (fundamentals.csv). The quality filter was not applied: every stock shows fundamentals N/A.</li><li>No data/results_calendar.csv: check each stock&#x27;s results date on Kite before buying.</li><li>The 12-year test uses today's Nifty 100 members for all years (survivorship bias), so real results are likely worse than the test.</li></ul></details>
+<div class="small muted" style="margin-top:14px">Updated 07 Nov 2026, 08:09 PM IST</div>
+<footer>Screening tool for personal use. Not investment advice. Past backtest results do not guarantee future returns.</footer></div><script>
+function copyText(id,btn){const t=document.getElementById(id).innerText;
+const done=()=>{const s=btn.nextElementSibling;s.textContent='Copied';setTimeout(()=>s.textContent='',1500)};
+if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(done,()=>fb(t,done))}else{fb(t,done)}}
+function fb(t,done){const a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';
+document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){}a.remove()}
+</script></body></html>

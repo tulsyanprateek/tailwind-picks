@@ -1,0 +1,37 @@
+{
+  "data_date": "2026-11-06",
+  "next_checkin": "2026-11-16",
+  "checkin_next_session": false,
+  "market_filter_on": false,
+  "backtest_passed": true,
+  "picks": [],
+  "holdings": [],
+  "next_in_line": [
+    {
+      "rank": 7,
+      "symbol": "BSE"
+    },
+    {
+      "rank": 8,
+      "symbol": "TVSMOTOR"
+    },
+    {
+      "rank": 9,
+      "symbol": "ADANIGREEN"
+    },
+    {
+      "rank": 10,
+      "symbol": "HAL"
+    },
+    {
+      "rank": 11,
+      "symbol": "ADANIENSOL"
+    }
+  ],
+  "notes": [
+    "TMCV: only 245 sessions of history (since 2025-11-12), skipped (needs about a year of prices).",
+    "VAML: only 101 sessions of history (since 2026-06-15), skipped (needs about a year of prices).",
+    "No fundamentals file (fundamentals.csv). The quality filter was not applied: every stock shows fundamentals N/A.",
+    "No data/results_calendar.csv: check each stock's results date on Kite before buying."
+  ]
+}
