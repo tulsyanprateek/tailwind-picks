@@ -104,13 +104,27 @@ trade:
   # Buy with a CNC limit order at the last close + 2%. If the stock opens higher and never
   # comes back to the limit that day, the order does not fill (do not chase).
   max_gap_pct: 2
+  # Stop loss type:
+  #   "percent": a wide safety net at stop_pct below the buy price (default, see below)
+  #   "atr":     the original tight stop, entry minus 2 x ATR(14), at most 8% below entry
+  # The 12-year test showed the tight ATR stop sold most trades on normal day-to-day moves.
+  # The safety-net size was chosen with the in-sample check (2014 to 2020 only), see
+  # backtest.html, "Stop loss check".
+  stop_mode: percent
+  stop_pct: 15
+  # Raise the safety net at each check-in to last close minus stop_pct (never lowered).
+  trail_stop_at_checkin: false
+  # Target (sell when price reaches entry + target_r x risk). Off by default: with a
+  # safety-net stop the target would be far away; holdings are sold at a check-in instead.
+  use_target: false
+  # Settings for stop_mode "atr":
   atr_period: 14
   atr_stop_multiple: 2        # stop loss = entry minus 2 x ATR(14) ...
   max_stop_pct: 8             # ... but never more than 8% below entry
   target_r: 3                 # target = entry + 3 x (entry - stop)
-  # At each check-in the stop of a kept holding is raised (never lowered) to
-  # last close minus 2 x ATR(14), and to at least the entry price once the price has
-  # risen 1R (entry + 1 x risk).
+  # With "atr" stops, at each check-in the stop of a kept holding is raised (never
+  # lowered) to last close minus 2 x ATR(14), and to at least the entry price once the
+  # price has risen 1R (entry + 1 x risk).
   breakeven_after_r: 1
   gtt_stop_limit_below_pct: 1 # GTT stop limit price = stop trigger minus 1%
   tick_size: 0.05             # prices on the Kite order sheet are rounded to this

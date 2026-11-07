@@ -4,6 +4,7 @@ Usage:  python backtest.py
 """
 from __future__ import annotations
 
+import copy
 import json
 import random
 import sys
@@ -27,6 +28,55 @@ ABLATIONS = [
     ("Without momentum filter (C)", {"relative_strength": False}),
     ("Without stop loss and target", {"stop_and_target": False}),
 ]
+
+
+# In-sample stop loss check (2014 to 2020 only). The selection rule was fixed before the
+# check was run: pick the version with the best in-sample return per unit of worst fall
+# (CAGR / |max drawdown|). The out-of-sample period is never used to choose.
+STOP_CHECK = [
+    ("No stop loss", None),
+    ("Tight stop: 2 x ATR, max 8%, target 3R", {"stop_mode": "atr", "use_target": True}),
+    ("Safety net 10%, fixed", {"stop_mode": "percent", "stop_pct": 10, "trail_stop_at_checkin": False}),
+    ("Safety net 15%, fixed", {"stop_mode": "percent", "stop_pct": 15, "trail_stop_at_checkin": False}),
+    ("Safety net 20%, fixed", {"stop_mode": "percent", "stop_pct": 20, "trail_stop_at_checkin": False}),
+    ("Safety net 10%, raised at check-ins", {"stop_mode": "percent", "stop_pct": 10, "trail_stop_at_checkin": True}),
+    ("Safety net 15%, raised at check-ins", {"stop_mode": "percent", "stop_pct": 15, "trail_stop_at_checkin": True}),
+    ("Safety net 20%, raised at check-ins", {"stop_mode": "percent", "stop_pct": 20, "trail_stop_at_checkin": True}),
+]
+
+
+def matches_config(override: dict | None, cfg: dict) -> bool:
+    t = cfg["trade"]
+    if override is None:
+        return not cfg["modules"].get("stop_and_target", True)
+    if not cfg["modules"].get("stop_and_target", True):
+        return False
+    if override["stop_mode"] != t["stop_mode"]:
+        return False
+    if override["stop_mode"] == "atr":
+        return bool(t.get("use_target")) == override["use_target"]
+    return (override["stop_pct"] == t["stop_pct"]
+            and override["trail_stop_at_checkin"] == bool(t.get("trail_stop_at_checkin"))
+            and not t.get("use_target"))
+
+
+def stop_check(panels, ohlc, cfg, start, is_end, base_modules, capital) -> list[dict]:
+    rows = []
+    for name, override in STOP_CHECK:
+        c = copy.deepcopy(cfg)
+        mods = dict(base_modules)
+        if override is None:
+            mods["stop_and_target"] = False
+        else:
+            mods["stop_and_target"] = True
+            c["trade"].update({"use_target": False, **override})
+        m = summarize(simulate(panels, ohlc, c, start, is_end, mods), capital)
+        ratio = m["cagr"] / abs(m["max_dd_pct"]) if m["max_dd_pct"] < 0 else float("nan")
+        rows.append({"name": name, "m": m, "ratio": ratio, "in_use": matches_config(override, cfg)})
+    best = max(rows, key=lambda r: (r["ratio"], 0))
+    for r in rows:
+        r["best"] = r is best
+    return rows
 
 
 def lookahead_spot_checks(prices, signals, cfg, n_checks, seed) -> int:
@@ -109,6 +159,15 @@ def main() -> int:
                  name, row["full"]["cagr"], row["full"]["max_dd_pct"], row["full"]["trades"],
                  row["oos"]["cagr"])
 
+    stop_rows = stop_check(panels, ohlc, cfg, start, is_end, base_modules, capital)
+    for r in stop_rows:
+        log.info("Stop check 2014-2020: %-40s CAGR %6.1f%%  maxDD %6.1f%%  ratio %.2f%s%s", r["name"],
+                 r["m"]["cagr"], r["m"]["max_dd_pct"], r["ratio"], "  <- best" if r["best"] else "",
+                 "  (in use)" if r["in_use"] else "")
+    if not any(r["best"] and r["in_use"] for r in stop_rows):
+        log.warning("The stop loss in config.yaml is not the one with the best in-sample ratio "
+                    "(see the Stop loss check section of the report).")
+
     full_m, is_m, oos_m = (ablation_rows[0][k] for k in ("full", "is", "oos"))
     bclose = index_df["Close"]
     bfull, beq_full = benchmark(bclose, start, end, capital)
@@ -130,7 +189,7 @@ def main() -> int:
         "full": full_m, "is": is_m, "oos": oos_m,
         "bench_full": bfull, "bench_is": bis, "bench_oos": boos,
         "equity_full": runs["full"].equity, "bench_eq_full": beq_full,
-        "trades_full": trades_full, "ablation": ablation_rows,
+        "trades_full": trades_full, "ablation": ablation_rows, "stop_check": stop_rows,
         "sanity": {
             "symbols_tested": len(signals), "universe_size": len(universe),
             "universe_source": uinfo.source,

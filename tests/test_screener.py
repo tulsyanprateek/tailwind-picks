@@ -23,6 +23,14 @@ def cfg():
     return load_config()
 
 
+@pytest.fixture(scope="module")
+def atr_cfg():
+    """The original tight ATR stop with a 3R target (the spec's stop and target maths)."""
+    c = load_config()
+    c["trade"].update({"stop_mode": "atr", "use_target": True})
+    return c
+
+
 def _fixture_ohlc():
     idx = pd.bdate_range("2024-01-01", periods=6)
     return pd.DataFrame({
@@ -88,8 +96,8 @@ def test_rebalance_days_are_first_session_on_or_after_1st_and_15th():
 
 # 3. Stop and target maths -------------------------------------------------------------
 
-def test_stop_target_and_quantity(cfg):
-    plan = plan_trade(1000.0, 25.0, cfg)           # entry 1,000, ATR(14) 25
+def test_stop_target_and_quantity(atr_cfg):
+    plan = plan_trade(1000.0, 25.0, atr_cfg)           # entry 1,000, ATR(14) 25
     assert plan.stop == pytest.approx(950)          # 1000 - 2 x 25 (within the 8% cap)
     assert plan.risk_per_share == pytest.approx(50)
     assert plan.breakeven_level == pytest.approx(1050)   # +1R: stop moves to entry
@@ -99,16 +107,28 @@ def test_stop_target_and_quantity(cfg):
 
 # 4. Stop never wider than 8% ----------------------------------------------------------
 
-def test_stop_is_capped_at_8_percent(cfg):
-    plan = plan_trade(1000.0, 60.0, cfg)            # 2 x ATR = 120 = 12%, too wide
+def test_stop_is_capped_at_8_percent(atr_cfg):
+    plan = plan_trade(1000.0, 60.0, atr_cfg)            # 2 x ATR = 120 = 12%, too wide
     assert plan.stop == pytest.approx(920)
     assert plan.target == pytest.approx(1240)
 
 
-def test_stop_is_only_ever_raised(cfg):
-    assert raised_stop(950, 1000, 50, 980, 25, cfg) == 950          # 980 - 50 = 930 < 950: unchanged
-    assert raised_stop(950, 1000, 50, 1060, 25, cfg) == 1010        # 1060 - 50
-    assert raised_stop(950, 1000, 50, 1050, 40, cfg) == 1000        # +1R reached: at least entry
+def test_stop_is_only_ever_raised(atr_cfg):
+    assert raised_stop(950, 1000, 50, 980, 25, atr_cfg) == 950          # 980 - 50 = 930 < 950: unchanged
+    assert raised_stop(950, 1000, 50, 1060, 25, atr_cfg) == 1010        # 1060 - 50
+    assert raised_stop(950, 1000, 50, 1050, 40, atr_cfg) == 1000        # +1R reached: at least entry
+
+
+def test_percent_safety_net_stop(cfg):
+    c = {**cfg, "trade": {**cfg["trade"], "stop_mode": "percent", "stop_pct": 15,
+                          "use_target": False, "trail_stop_at_checkin": False}}
+    plan = plan_trade(1000.0, 25.0, c)
+    assert plan.stop == pytest.approx(850)
+    assert math.isinf(plan.target)
+    assert raised_stop(850, 1000, 150, 1300, 25, c) == 850        # fixed: never moves
+    c["trade"]["trail_stop_at_checkin"] = True
+    assert raised_stop(850, 1000, 150, 1300, 25, c) == pytest.approx(1105)   # 1300 x 0.85
+    assert raised_stop(850, 1000, 150, 900, 25, c) == 850         # never lowered
 
 
 # 5. Gap rule --------------------------------------------------------------------------

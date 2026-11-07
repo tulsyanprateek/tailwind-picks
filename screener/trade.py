@@ -33,19 +33,28 @@ def limit_fill(day_open: float, day_low: float, limit: float) -> float | None:
 
 
 def plan_trade(entry: float, atr_value: float, cfg: dict) -> TradePlan:
-    """Stop = entry - 2 x ATR, capped at max_stop_pct below entry. Target = entry + 3R."""
+    """stop_mode 'percent': stop = entry x (1 - stop_pct).
+    stop_mode 'atr': stop = entry - 2 x ATR, capped at max_stop_pct below entry.
+    Target = entry + target_r x R (infinite when use_target is off)."""
     t = cfg["trade"]
-    stop = max(entry - t["atr_stop_multiple"] * atr_value, entry * (1 - t["max_stop_pct"] / 100))
+    if t.get("stop_mode", "atr") == "percent":
+        stop = entry * (1 - t["stop_pct"] / 100)
+    else:
+        stop = max(entry - t["atr_stop_multiple"] * atr_value, entry * (1 - t["max_stop_pct"] / 100))
     r = entry - stop
+    target = entry + t["target_r"] * r if t.get("use_target", True) else math.inf
     return TradePlan(entry=entry, stop=stop, risk_per_share=r,
-                     breakeven_level=entry + t["breakeven_after_r"] * r,
-                     target=entry + t["target_r"] * r)
+                     breakeven_level=entry + t["breakeven_after_r"] * r, target=target)
 
 
 def raised_stop(current_stop: float, entry: float, risk_per_share: float,
                 last_close: float, atr_value: float, cfg: dict) -> float:
     """Stop for a kept holding at a check-in. Never lower than the current stop."""
     t = cfg["trade"]
+    if t.get("stop_mode", "atr") == "percent":
+        if t.get("trail_stop_at_checkin", False):
+            return max(current_stop, last_close * (1 - t["stop_pct"] / 100))
+        return current_stop
     new = current_stop
     if not math.isnan(atr_value):
         new = max(new, last_close - t["atr_stop_multiple"] * atr_value)

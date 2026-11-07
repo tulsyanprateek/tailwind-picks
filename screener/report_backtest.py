@@ -106,6 +106,57 @@ def _trade_table(trades: pd.DataFrame) -> str:
             f'</tr></thead><tbody>{"".join(body)}</tbody></table></div>')
 
 
+def _stop_rule_text(cfg: dict) -> str:
+    t = cfg["trade"]
+    if not cfg["modules"].get("stop_and_target", True):
+        return "<li>No stop loss and no target: holdings are only sold at a check-in.</li>"
+    if t.get("stop_mode") == "percent":
+        s = (f"<li>Safety-net stop loss {t['stop_pct']}% below the buy price, as a GTT order on Kite"
+             + (", raised at each check-in to last close minus the same %" if t.get("trail_stop_at_checkin") else "")
+             + ".")
+    else:
+        s = (f"<li>Stop loss: entry minus {t['atr_stop_multiple']} x ATR(14), never more than "
+             f"{t['max_stop_pct']}% below entry, raised at each check-in (never lowered).")
+    if t.get("use_target", True):
+        s += f" Target: entry + {t['target_r']} x the risk, in the same GTT order."
+    else:
+        s += " No target: holdings are sold at a check-in when they drop off the list."
+    return s + "</li>"
+
+
+def _stop_check_section(rows: list[dict] | None) -> str:
+    if not rows:
+        return ""
+    body = []
+    for r in rows:
+        m = r["m"]
+        tag = []
+        if r["best"]:
+            tag.append("best ratio")
+        if r["in_use"]:
+            tag.append("in use")
+        name = esc(r["name"]) + (f' <span class="badge amber">{esc(", ".join(tag))}</span>' if tag else "")
+        hl = ' class="hl"' if r["in_use"] else ""
+        body.append(f"<tr{hl}><td>{name}</td><td class=\"{_cls(m['cagr'])}\">{_f(m['cagr'], 'spct')}</td>"
+                    f"<td>{_f(m['max_dd_pct'], 'pct')}</td><td>{r['ratio']:.2f}</td>"
+                    f"<td>{_f(m['trades'], 'n')}</td><td>{_f(m['win_rate'], 'pct')}</td></tr>")
+    in_use_best = any(r["best"] and r["in_use"] for r in rows)
+    note = "" if in_use_best else (
+        '<p class="small"><b>Why the setting in use is not the best ratio:</b> the test only contains '
+        "stocks that are in the Nifty 100 today. Companies that collapsed and left the index (the "
+        "situations a safety-net stop exists for) are missing, so the test cannot show what the stop "
+        "protects against. The difference in the 2014 to 2020 results is small, so the safety net is kept "
+        "as insurance. This was decided before looking at any 2021+ results for these versions.</p>")
+    return (
+        "<h2>Stop loss check (2014 to 2020 only)</h2>"
+        '<p class="muted small">The only parameter check allowed: done on the in-sample years only, so the '
+        "2021+ results stay a fair test. Rule fixed in advance: prefer the best yearly return per unit of "
+        "worst fall (ratio = CAGR / worst fall). Only the version in use is shown after 2020.</p>"
+        '<div class="scroll"><table><thead><tr><th>Version</th><th>CAGR</th><th>Worst fall</th>'
+        f'<th>Ratio</th><th>Trades</th><th>Win %</th></tr></thead><tbody>{"".join(body)}</tbody></table></div>'
+        f"{note}")
+
+
 def build_backtest_html(ctx: dict, cfg: dict) -> str:
     v = ctx["verdict"]
     full, ins, oos = ctx["full"], ctx["is"], ctx["oos"]
@@ -168,9 +219,7 @@ def build_backtest_html(ctx: dict, cfg: dict) -> str:
         f'the top {p["keep_if_rank_within"]}.</li>'
         f'<li>Each new holding gets 1/{p["holdings"]} of the portfolio, bought with a limit order at last '
         f'close + {cfg["trade"]["max_gap_pct"]}%.</li>'
-        f'<li>Stop loss: entry minus {cfg["trade"]["atr_stop_multiple"]} x ATR(14), never more than '
-        f'{cfg["trade"]["max_stop_pct"]}% below entry. Target: entry + {cfg["trade"]["target_r"]} x the risk. '
-        'Both are a GTT order on Kite. At each check-in the stop is raised (never lowered).</li>'
+        f'{_stop_rule_text(cfg)}'
         '<li>If the stop and the target are both touched on the same day, the test assumes the stop '
         'was hit first.</li></ul></div>')
 
@@ -212,6 +261,7 @@ what was planned; +3R hit the target.</p>
 <p class="muted small">The same test with one part switched off at a time. If a version without a part does as well,
 that part is not earning its place.</p>
 {_ablation_table(ctx["ablation"])}
+{_stop_check_section(ctx.get("stop_check"))}
 {rules}
 <h2>All trades ({len(ctx["trades_full"])})</h2>
 <p><button onclick="dl()">Download CSV</button></p>
