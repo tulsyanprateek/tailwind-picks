@@ -94,6 +94,8 @@ relative_strength:
   min_percentile: 70
 
 portfolio:
+  # Money set aside for this method. The live report buys capital / holdings per stock,
+  # so update this number now and then as your account grows or shrinks.
   capital: 100000
   holdings: 5                 # number of stocks held at once; each gets 1/5 of the portfolio
   # A holding is kept at a check-in while it still passes the filters and ranks within
