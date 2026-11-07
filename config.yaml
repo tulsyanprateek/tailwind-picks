@@ -1,4 +1,4 @@
-# Momentum Radar: configuration
+# Tailwind Picks: configuration
 #
 # How it works, in short:
 #   Every 2 weeks (first trading day on or after the 1st and the 15th of the month) the tool
@@ -12,15 +12,15 @@
 
 # Name shown on the web pages.
 brand:
-  name: "Momentum Radar"
-  tagline: "Nifty 100 trend tracker"
+  name: "Tailwind Picks"
+  tagline: "Strong stocks, rising market"
 
 paths:
   # Where report.html, candidates.json, backtest.html and the CSV exports go.
   # Relative paths are relative to this project folder. An absolute path works too,
   # for example a synced cloud folder so you can open the reports on your phone:
   #   output_dir: "C:/Users/you/OneDrive/screener"
-  output_dir: "D:/Ptk/Momentum Radar"   # Google Drive (My Drive) folder: open on the phone in the Drive app
+  output_dir: "D:/Ptk/Tailwind Picks"   # Google Drive (My Drive) folder: open on the phone in the Drive app
   # Universe, fundamentals, results calendar and your open trades live here.
   data_dir: data
   # Cached daily prices, one CSV per symbol. Delete a file to force a full re-download.

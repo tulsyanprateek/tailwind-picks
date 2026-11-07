@@ -1,4 +1,4 @@
-"""Momentum Radar dashboard: one simple scrolling page (approved wireframe).
+"""Tailwind Picks dashboard: one simple scrolling page (approved wireframe).
 
 1 header  2 today's answer  3 market card  4 stock cards (top 5)
 5 rest of the Top 10  6 does it work?  7 disclaimer (page footer)
@@ -186,7 +186,7 @@ def stock_card(w, d: dict, pick, market_on: bool) -> str:
   <span>Rank <b>#{w.rank}</b></span><span>{esc(HINT.get(w.overall, ""))}</span></div>
   <div class="qty">{esc(qty_txt)}</div>
   <details class="more"><summary>Show details</summary>
-    <div class="muted2" style="margin-top:10px">Momentum Radar rules (these decide the signal)</div>{_rows(w.signals)}
+    <div class="muted2" style="margin-top:10px">Tailwind Picks rules (these decide the signal)</div>{_rows(w.signals)}
     <div class="muted2">Second-opinion indicators (for checking only)</div>{_rows(w.second)}
     <div class="hint">RSI (14): above 70 stretched, below 50 weak</div><div class="ichart" data-chart="{sid}" data-kind="rsi"></div>
     <div class="hint">MACD: bars above zero = rising momentum</div><div class="ichart" data-chart="{sid}" data-kind="macd"></div>
@@ -204,7 +204,7 @@ def build_dashboard_html(ctx: dict, cfg: dict) -> str:
     charts = ctx.get("charts", {}) or {}
     rows = [w for w in (ctx.get("watch_why") or []) if w.symbol in charts]
     pick_map = ctx.get("pick_map") or {p.symbol: p for p in picks}
-    brand = (cfg.get("brand", {}).get("name", "Momentum Radar"), cfg.get("brand", {}).get("tagline", ""))
+    brand = (cfg.get("brand", {}).get("name", "Tailwind Picks"), cfg.get("brand", {}).get("tagline", ""))
     n_hold, keep_n = cfg["portfolio"]["holdings"], cfg["portfolio"]["keep_if_rank_within"]
 
     # 2. today's answer
@@ -213,9 +213,9 @@ def build_dashboard_html(ctx: dict, cfg: dict) -> str:
     elif not regime_on:
         big, tone = "Don't buy now", "red"
         if tomorrow:
-            why = "The overall market is weak. Tomorrow, sell stocks you bought with Momentum Radar and keep the money aside."
+            why = "The overall market is weak. Tomorrow, sell stocks you bought with Tailwind Picks and keep the money aside."
         else:
-            why = ("The overall market is weak, so keep your money aside. If you own stocks from Momentum Radar, "
+            why = ("The overall market is weak, so keep your money aside. If you own stocks from Tailwind Picks, "
                    f"sell them on {checkin_day:%a %d %b}.")
     elif tomorrow:
         big, tone = "Action tomorrow", "blue"
@@ -292,7 +292,7 @@ def build_dashboard_html(ctx: dict, cfg: dict) -> str:
         eq = ""
         if st.get("equity_weekly"):
             eq = ('<div class="eqchart" data-chart="EQUITY" data-kind="eq"></div><div class="lg">'
-                  '<span><i style="background:#3b82f6"></i>₹1,00,000 with Momentum Radar since 2014</span>'
+                  '<span><i style="background:#3b82f6"></i>₹1,00,000 with Tailwind Picks since 2014</span>'
                   '<span><i style="background:#8a94a7"></i>Nifty 50</span></div>')
         proof = ('<div class="sec">Does it work?</div><div class="card"><div class="nums">'
                  f'<div><b class="{"dn" if failed else "up"}">{"FAILED" if failed else "PASSED"}</b><span>12-year test, '

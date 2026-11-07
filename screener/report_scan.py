@@ -16,7 +16,7 @@ def build_report_html(ctx: dict, cfg: dict) -> str:
 def phone_message(ctx: dict) -> str:
     """Short plain-text summary (Telegram, if switched on)."""
     st = ctx["backtest_status"]
-    lines = [f"Momentum Radar, prices to {ctx['data_date']:%a %d %b}"]
+    lines = [f"Tailwind Picks, prices to {ctx['data_date']:%a %d %b}"]
     if st is not None and not st["passed"]:
         lines.append("WARNING: STRATEGY FAILED OUT OF SAMPLE. Do not trade it.")
     lines.append("Market: " + ("strong" if ctx["regime_on"] else "weak, do not buy"))

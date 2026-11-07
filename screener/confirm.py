@@ -1,7 +1,7 @@
 """Second-opinion indicators (RSI, MACD, ADX, OBV volume) for validating each stock.
 
 These are shown on the dashboard for transparency. They are NOT part of the tested
-buy/sell rules, so they never change what Momentum Radar picks.
+buy/sell rules, so they never change what Tailwind Picks picks.
 """
 from __future__ import annotations
 

@@ -76,7 +76,7 @@ def build_how_html(cfg: dict, status: dict | None, nifty_chart: dict | None, fun
     n_hold, keep = p["holdings"], p["keep_if_rank_within"]
     stop = f"{t['stop_pct']:g}%" if t.get("stop_mode") == "percent" else "2 x ATR"
     sm = (status or {}).get("summary") or {}
-    brand = (cfg.get("brand", {}).get("name", "Momentum Radar"), cfg.get("brand", {}).get("tagline", ""))
+    brand = (cfg.get("brand", {}).get("name", "Tailwind Picks"), cfg.get("brand", {}).get("tagline", ""))
     aim = f"+{sm['avg_win_pct']:.0f}%" if sm.get("avg_win_pct") else "the typical win"
 
     principles = [
@@ -136,7 +136,7 @@ def build_how_html(cfg: dict, status: dict | None, nifty_chart: dict | None, fun
                 f'(Nifty 50: {pct(sm.get("nifty_full_max_dd_pct"), 0)})</span></div></div>')
 
     body = f"""<div class="hwrap">
-<div class="hero2"><h1>How Momentum Radar works</h1>
+<div class="hero2"><h1>How Tailwind Picks works</h1>
 <p class="lead">A rule-based way to own the strongest Nifty 100 stocks, only while the market is healthy. Every number on the
 dashboard comes from the rules below.</p>
 <div class="toc"><a href="#philosophy">Philosophy</a><a href="#radar">How stocks get on the radar</a><a href="#indicators">Indicators</a>

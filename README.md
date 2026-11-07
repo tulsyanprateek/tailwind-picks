@@ -1,4 +1,4 @@
-# Momentum Radar (personal use)
+# Tailwind Picks (personal use)
 
 Every 2 weeks this tool picks up to 5 Nifty 100 stocks to hold. For each one it gives the
 quantity, buy price, stop loss and target. You set the stop loss and target as a GTT order

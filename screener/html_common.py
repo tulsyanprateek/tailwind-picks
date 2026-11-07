@@ -55,7 +55,7 @@ footer{margin:32px 0 12px;color:var(--muted);font-size:13px;border-top:1px solid
 FOOTER = ("Screening tool for personal use. Not investment advice. "
           "Past backtest results do not guarantee future returns.")
 
-DISCLAIMER = ("Momentum Radar is a free personal experiment. Not investment advice and not a "
+DISCLAIMER = ("Tailwind Picks is a free personal experiment. Not investment advice and not a "
               "recommendation to buy or sell. The author is not registered with SEBI as an investment "
               "adviser or research analyst. Stocks can lose money; past results do not guarantee future "
               "returns. Do your own research or ask a SEBI-registered adviser.")
@@ -85,13 +85,23 @@ FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">'
          '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
          '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900'
          '&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">')
+LOGO_SVG = ('<svg viewBox="0 0 64 64" width="36" height="36" aria-hidden="true">'
+            '<rect x="2" y="2" width="60" height="60" rx="16" fill="#0b0d12" stroke="#1d222c"/>'
+            '<path d="M10 24H26M14 32H30M10 40H22" stroke="#3b82f6" stroke-width="3.5" stroke-linecap="round" fill="none"/>'
+            '<path d="M20 46L33 33L41 40L54 22" stroke="#22c55e" stroke-width="4.5" stroke-linecap="round" '
+            'stroke-linejoin="round" fill="none"/>'
+            '<path d="M45 21H55V31" stroke="#22c55e" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" '
+            'fill="none"/></svg>')
+FAVICON = ("data:image/svg+xml," + LOGO_SVG.replace('width="36" height="36" aria-hidden="true"', 'xmlns="http://www.w3.org/2000/svg"')
+           .replace("#", "%23").replace('"', "'").replace("<", "%3C").replace(">", "%3E"))
+
 NAV = [("index.html", "Dashboard"), ("how.html", "How it works"), ("backtest.html", "12-year test")]
 
 
 def page(title: str, body: str, extra_js: str = "", brand: tuple[str, str] | None = None,
          head_extra: str = "", active: str = "") -> str:
-    name, tagline = brand or ("Momentum Radar", "Nifty 100 trend tracker")
-    top = (f'<div class="topbar"><a class="brand" href="index.html"><span class="logo"><i></i></span>'
+    name, tagline = brand or ("Tailwind Picks", "Nifty 100 trend tracker")
+    top = (f'<div class="topbar"><a class="brand" href="index.html">{LOGO_SVG}'
            f'<span><div class="bname">{esc(name)}</div><div class="btag">{esc(tagline)}</div></span></a>'
            f'<span class="exp">Free experiment</span></div>'
            + '<nav class="nav">' + "".join(f'<a href="{h}" class="{"on" if h == active else ""}">{t}</a>'
@@ -99,7 +109,7 @@ def page(title: str, body: str, extra_js: str = "", brand: tuple[str, str] | Non
     return (f"<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
             f"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
             f"<meta name=\"robots\" content=\"noindex,nofollow\"><meta name=\"theme-color\" content=\"#000000\">"
-            f"<title>{esc(name)} | {esc(title)}</title>{FONTS}<style>{CSS}{BRAND_CSS}</style>{head_extra}</head>"
+            f"<title>{esc(name)} | {esc(title)}</title><link rel=\"icon\" href=\"{FAVICON}\">{FONTS}<style>{CSS}{BRAND_CSS}</style>{head_extra}</head>"
             f"<body><div class=\"wrap\">{top}{body}<footer><div class=\"disc\">{esc(DISCLAIMER)}</div>"
             f"{esc(name)}. {esc(FOOTER)}</footer></div>"
             f"{'<script>' + extra_js + '</script>' if extra_js else ''}</body></html>")
