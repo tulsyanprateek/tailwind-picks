@@ -11,6 +11,7 @@ from . import costs
 from .fundamentals import FundResult, evaluate, results_flag
 from .signals import Panels, ranked_eligible
 from .trade import limit_price, plan_trade, quantity, raised_stop
+from .utils import inr
 
 
 # --------------------------------------------------------------------------- dates
@@ -69,6 +70,66 @@ def round_to_tick(price: float, mode: str = "down") -> float:
     return round(steps * tick, 2)
 
 
+# --------------------------------------------------------------------------- why this stock
+
+@dataclass
+class Why:
+    symbol: str
+    company: str
+    rank: int
+    reasons: list[str]
+    meta: str
+    about: str
+    risk: str
+
+
+def _ret(c: pd.Series, n: int) -> float:
+    return float(c.iloc[-1] / c.iloc[-1 - n] - 1) * 100 if len(c) > n else math.nan
+
+
+def why_stock(sym: str, rank: int, rs_pct: float, trend_ok: bool, df: pd.DataFrame,
+              index_df: pd.DataFrame, data_ts: pd.Timestamp, profile: dict,
+              fund: FundResult | None, cfg: dict) -> Why:
+    """Plain-language reasons. These are the real reasons the method picked the stock
+    (price strength and trend), plus what the company does for context."""
+    c = df["Close"].loc[:data_ts]
+    nc = index_df["Close"].loc[:data_ts]
+    r12, r6, r3 = _ret(c, 252), _ret(c, 126), _ret(c, 63)
+    n12 = _ret(nc, 252)
+    reasons = []
+    if not math.isnan(r12):
+        reasons.append(f"Up {r12:+.0f}% in the last 12 months, while the Nifty 50 moved {n12:+.0f}%.")
+    if not math.isnan(r3):
+        if r6 > 0 and r3 > 0:
+            reasons.append(f"Still rising lately: {r6:+.0f}% in 6 months and {r3:+.0f}% in 3 months.")
+        else:
+            reasons.append(f"Has cooled off lately ({r3:+.0f}% in 3 months), but is still strong over the year.")
+    if rs_pct >= 99.5:
+        reasons.append(f"The strongest Nifty 100 stock over the last 3 to 12 months (rank #{rank} on the list).")
+    else:
+        reasons.append(f"Stronger than {rs_pct:.0f}% of Nifty 100 stocks over the last 3 to 12 months "
+                       f"(rank #{rank} on the list).")
+    hi = float(df["High"].loc[:data_ts].iloc[-252:].max())
+    gap = (1 - c.iloc[-1] / hi) * 100
+    where = "at its 52-week high" if gap < 1 else f"{gap:.0f}% below its 52-week high"
+    if trend_ok:
+        reasons.append(f"Trading {where} and above its 50, 150 and 200-day averages: a steady uptrend.")
+    else:
+        reasons.append(f"Trading {where}.")
+    if fund is not None and fund.status != "N/A":
+        reasons.append(fund.summary + ".")
+    meta_parts = [x for x in (profile.get("sector"), profile.get("industry")) if x]
+    mc = profile.get("market_cap")
+    if mc:
+        meta_parts.append(f"Market value {inr(mc / 1e7)} crore")
+    t = cfg["trade"]
+    stop_txt = f"the {t['stop_pct']:g}% stop loss" if t.get("stop_mode") == "percent" else "the stop loss"
+    risk = ("Picked for its price strength, not because of a forecast about the business. Strong stocks "
+            f"can fall quickly; {stop_txt} limits the loss.")
+    return Why(sym, profile.get("name") or sym, rank, reasons, " · ".join(meta_parts),
+               profile.get("summary") or "", risk)
+
+
 # --------------------------------------------------------------------------- buy list
 
 @dataclass
@@ -95,6 +156,7 @@ class Pick:
     filters: list[tuple[str, bool]]
     closes: list[float] = field(default_factory=list)
     order_text: str = ""
+    why: "Why | None" = None
 
 
 def _filters_for(p: Panels, i: int, sym: str, cfg: dict, fund: FundResult) -> list[tuple[str, bool]]:

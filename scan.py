@@ -14,7 +14,8 @@ import pandas as pd
 
 from screener import notify
 from screener.checkin import (check_holdings, is_checkin_session, load_open_trades, make_pick,
-                              next_checkin, next_weekday)
+                              next_checkin, next_weekday, why_stock)
+from screener.profiles import get_profile
 from screener.config import load_config
 from screener.data import load_prices, load_universe
 from screener.fundamentals import evaluate, load_fundamentals, load_results_calendar
@@ -149,6 +150,16 @@ def run(cfg: dict, log) -> int:
         else:
             break
 
+    # Plain-language "why this stock" for the picks (and the watch list when the market is OFF).
+    def why_for(sym: str, rank: int):
+        fund = evaluate(sym, industry.get(sym, ""), ftable, cfg) if ftable is not None else None
+        return why_stock(sym, rank, float(panels.rs_pct.iloc[i][sym]), bool(panels.trend_ok.iloc[i][sym]),
+                         fresh[sym], index_df, data_ts, get_profile(sym, cfg), fund, cfg)
+
+    for pk in picks:
+        pk.why = why_for(pk.symbol, pk.rank)
+    watch_why = [] if regime_on else [why_for(s, r) for r, s in enumerate(ranked_any[:5], 1)]
+
     status_path = out_dir / "backtest_status.json"
     status = json.loads(status_path.read_text(encoding="utf-8")) if status_path.exists() else None
 
@@ -156,7 +167,7 @@ def run(cfg: dict, log) -> int:
            "checkin_next": checkin_next, "regime_on": regime_on, "backtest_status": status,
            "picks": picks, "holdings": holdings, "next_in_line": next_in_line,
            "skipped_quality": skipped, "watch_when_off": ranked_any[:5], "notes": notes,
-           "phone_notes": phone_notes,
+           "phone_notes": phone_notes, "watch_why": watch_why,
            "top_list": list(enumerate(ranked[:cfg["portfolio"]["keep_if_rank_within"]], 1))}
     (out_dir / "report.html").write_text(build_report_html(ctx, cfg), encoding="utf-8")
     (out_dir / "candidates.json").write_text(candidates_json(ctx), encoding="utf-8")

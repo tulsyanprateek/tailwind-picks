@@ -61,6 +61,12 @@ white-space:pre-wrap;word-break:break-word;margin:10px 0}
 details{margin:8px 0}summary{cursor:pointer;color:var(--muted);font-size:13px}
 .spark{display:block;width:100%;height:auto;margin:6px 0}
 .copied{color:var(--green);font-size:13px;margin-left:8px}
+.why{margin:12px 0 6px;padding:12px 14px;border-radius:14px;background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.18)}
+.why-h{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);font-weight:700;margin:2px 0 6px}
+.why .why-h+ul{margin-top:0}.reasons{margin:0 0 10px;padding-left:18px}.reasons li{margin:4px 0}
+.meta{font-size:13px;color:#cfd6e4;font-weight:600;margin-bottom:4px}
+.about{margin:0 0 10px;font-size:14px;color:#c4cbd8}.src{font-size:11px;color:var(--muted)}
+.risk{font-size:13px;color:#fde68a;background:rgba(251,191,36,.08);border-radius:10px;padding:8px 10px}
 """
 
 COPY_JS = """
@@ -100,6 +106,25 @@ def _badge(text: str, colour: str) -> str:
     return f'<span class="badge {colour}">{esc(text)}</span>'
 
 
+def why_block(w) -> str:
+    if w is None:
+        return ""
+    about = ""
+    if w.meta or w.about:
+        about = (f'<div class="why-h">About the business</div>'
+                 + (f'<div class="meta">{esc(w.meta)}</div>' if w.meta else "")
+                 + (f'<p class="about">{esc(w.about)} <span class="src">Source: Yahoo Finance</span></p>' if w.about else ""))
+    return (f'<div class="why"><div class="why-h">Why this stock</div><ul class="reasons">'
+            + "".join(f"<li>{esc(r)}</li>" for r in w.reasons) + "</ul>"
+            + about + f'<div class="risk">{esc(w.risk)}</div></div>')
+
+
+def watch_card(w) -> str:
+    return (f'<div class="pick"><div class="head"><div><span class="sym">{esc(w.symbol)}</span> '
+            f'<span class="co">{esc(w.company)}</span></div><span class="badge amber">Watch #{w.rank}</span></div>'
+            f'{why_block(w)}</div>')
+
+
 def pick_card(pk: Pick, k: int, cfg: dict) -> str:
     fund_colour = {"PASS": "green", "FAIL": "red"}.get(pk.fund.status, "amber")
     res_colour = {"avoid": "red", "ok": "green"}.get(pk.results_level, "amber")
@@ -123,6 +148,7 @@ def pick_card(pk: Pick, k: int, cfg: dict) -> str:
     {target_cell}
   </div>
   <div class="flags">{_badge(pk.results_text, res_colour)} {_badge("Quality: " + pk.fund.status, fund_colour)}</div>
+  {why_block(pk.why)}
   {sparkline(pk.closes, pk.stop, pk.limit)}
   <pre class="order" id="o{k}">{esc(pk.order_text)}</pre>
   <button onclick="copyText('o{k}',this)">Copy order</button><span class="copied"></span>
@@ -239,7 +265,11 @@ def build_report_html(ctx: dict, cfg: dict) -> str:
         watch = ctx.get("watch_when_off", [])
         pick_title = "Watch list"
         pick_html = '<p class="muted">No buys while the market filter is OFF.</p>'
-        if watch:
+        watch_why = ctx.get("watch_why") or []
+        if watch_why:
+            pick_html += ('<p class="small muted">The strongest stocks right now, to watch only. '
+                          'Do not buy until the market filter is ON.</p>' + "".join(watch_card(w) for w in watch_why))
+        elif watch:
             pick_html += ('<div class="ranks">' + "".join(f'<span class="rank"><b>{k}</b>{esc(s)}</span>'
                                                       for k, s in enumerate(watch, 1)) + "</div>"
                           '<p class="small muted">Strongest stocks right now, to watch only.</p>')
