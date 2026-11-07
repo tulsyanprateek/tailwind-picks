@@ -15,7 +15,7 @@ paths:
   # Relative paths are relative to this project folder. An absolute path works too,
   # for example a synced cloud folder so you can open the reports on your phone:
   #   output_dir: "C:/Users/you/OneDrive/screener"
-  output_dir: output
+  output_dir: "D:/Ptk/Stock Screener"   # Google Drive (My Drive) folder: open on the phone in the Drive app
   # Universe, fundamentals, results calendar and your open trades live here.
   data_dir: data
   # Cached daily prices, one CSV per symbol. Delete a file to force a full re-download.
@@ -67,7 +67,7 @@ schedule:
 # Telegram message to your phone after each run. Put the bot token and chat id in
 # secrets.yaml (never in this file). See README, "Phone messages".
 telegram:
-  enabled: true
+  enabled: false              # off: reports go to Google Drive instead
   send_report_file: true      # attach report.html so it opens on the phone
 
 # Filters. Each can be switched off (the backtest also shows results without them).

@@ -1,13 +1,8 @@
 @echo off
 cd /d "%~dp0"
-echo.
-echo Step 1 of 2: connect your phone (Telegram)
-echo In Telegram, message @BotFather, send /newbot, and copy the token it gives you.
-echo.
-.venv\Scripts\python telegram_setup.py
-echo.
-echo Step 2 of 2: run the check every evening at 6 pm
+echo Setting up the evening check (every day at 6 pm)...
 powershell -ExecutionPolicy Bypass -File setup_daily_run.ps1
 echo.
-echo All done. You will get a message on your phone every evening.
+echo Done. Every evening the report is saved to Google Drive, folder "Stock Screener".
+echo Open it in the Google Drive app on your phone.
 pause
