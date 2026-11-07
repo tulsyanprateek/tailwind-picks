@@ -173,21 +173,28 @@ def run(cfg: dict, log) -> int:
                     "aim_pct": aim_pct}
         return w
 
+    # Watchlist on the dashboard: the Top 10 (picks marked), each with signals, prices and charts.
+    pick_map = {pk.symbol: pk for pk in picks}
     for pk in picks:
         pk.why = why_for(pk.symbol, pk.rank, pk)
-    watch_why = [] if regime_on else [why_for(s, r) for r, s in enumerate(ranked_any[:5], 1)]
-    charts = {"NIFTY": index_payload(index_df, data_ts, cfg)}
-    for pk in picks:
-        charts[pk.symbol] = stock_payload(fresh[pk.symbol], index_df, data_ts, stop=pk.stop, limit=pk.limit)
+    keep_n = cfg["portfolio"]["keep_if_rank_within"]
+    list_syms = list((ranked if regime_on else ranked_any)[:keep_n])
+    list_syms += [s for s in pick_map if s not in list_syms]
+    watch_why = []
+    for r, s in enumerate(list_syms, 1):
+        w = pick_map[s].why if s in pick_map else why_for(s, (ranked if regime_on else ranked_any).index(s) + 1)
+        watch_why.append(w)
+    charts = {"NIFTY": index_payload(index_df, data_ts, cfg, sessions=500)}
     for w in watch_why:
-        charts[w.symbol] = stock_payload(fresh[w.symbol], index_df, data_ts, stop=w.levels["stop"],
-                                         limit=w.levels["buy"])
+        charts[w.symbol] = stock_payload(fresh[w.symbol], index_df, data_ts, sessions=500,
+                                         stop=w.levels["stop"], limit=w.levels["buy"])
+        charts[w.symbol]["aim"] = w.levels.get("aim")
 
     ctx = {"generated": now_ist(), "data_date": data_day, "next_checkin": checkin_day,
            "checkin_next": checkin_next, "regime_on": regime_on, "backtest_status": status,
            "picks": picks, "holdings": holdings, "next_in_line": next_in_line,
            "skipped_quality": skipped, "watch_when_off": ranked_any[:5], "notes": notes,
-           "phone_notes": phone_notes, "watch_why": watch_why, "charts": charts,
+           "phone_notes": phone_notes, "watch_why": watch_why, "charts": charts, "pick_map": pick_map,
            "top_list": list(enumerate(ranked[:cfg["portfolio"]["keep_if_rank_within"]], 1))}
     (out_dir / "report.html").write_text(build_report_html(ctx, cfg), encoding="utf-8")
     (out_dir / "candidates.json").write_text(candidates_json(ctx), encoding="utf-8")

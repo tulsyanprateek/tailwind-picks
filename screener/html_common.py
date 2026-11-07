@@ -14,13 +14,13 @@ CSS = """
 --amber:#fbbf24;--amber-bg:rgba(251,191,36,.12);--blue:#60a5fa;--violet:#a78bfa;--grey:#7d8696}
 *{box-sizing:border-box}
 html,body{margin:0;color:var(--text);
-font:15px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+font:15px/1.55 Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
 -webkit-font-smoothing:antialiased}
 html{background:var(--bg)}
 body{background:radial-gradient(1200px 520px at 15% -10%,rgba(96,165,250,.16),transparent 60%),
 radial-gradient(900px 480px at 100% 0%,rgba(167,139,250,.14),transparent 55%),var(--bg);min-height:100vh}
 .wrap{max-width:860px;margin:0 auto;padding:20px 16px 28px}
-h1{font-size:24px;margin:4px 0 2px;letter-spacing:-.02em}h2{font-size:18px;margin:30px 0 12px;letter-spacing:-.01em}h3{font-size:15px;margin:16px 0 6px}
+h1,h2,h3{font-family:"Space Grotesk",Inter,sans-serif}h1{font-size:24px;margin:4px 0 2px;letter-spacing:-.02em}h2{font-size:18px;margin:30px 0 12px;letter-spacing:-.01em}h3{font-size:15px;margin:16px 0 6px}
 .muted{color:var(--muted)}.small{font-size:13px}
 .banner{border-radius:16px;padding:14px 16px;margin:12px 0;font-weight:600}
 .banner.red{background:var(--red-bg);border:1px solid var(--red);color:#ffd6d6}
@@ -67,7 +67,7 @@ BRAND_CSS = """
 .logo{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
 background:conic-gradient(from 200deg,#60a5fa,#a78bfa,#34d399,#60a5fa);box-shadow:0 0 24px rgba(96,165,250,.35)}
 .logo i{width:12px;height:12px;border-radius:50%;background:#070b14;box-shadow:0 0 0 3px rgba(7,11,20,.35)}
-.bname{font-weight:800;font-size:17px;letter-spacing:-.02em;line-height:1.1}.btag{font-size:11.5px;color:var(--muted)}
+.bname{font-family:"Space Grotesk",Inter,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.02em;line-height:1.1}.btag{font-size:11.5px;color:var(--muted)}
 .exp{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;
 color:#fbbf24;background:rgba(251,191,36,.10);border:1px solid rgba(251,191,36,.25);white-space:nowrap}
 .nav{display:flex;gap:6px;margin:0 0 16px;padding:4px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
@@ -82,6 +82,10 @@ def esc(s) -> str:
     return html.escape(str(s))
 
 
+FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">'
+         '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+         '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900'
+         '&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">')
 NAV = [("index.html", "Dashboard"), ("how.html", "How it works"), ("backtest.html", "12-year test")]
 
 
@@ -96,7 +100,7 @@ def page(title: str, body: str, extra_js: str = "", brand: tuple[str, str] | Non
     return (f"<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
             f"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
             f"<meta name=\"robots\" content=\"noindex,nofollow\"><meta name=\"theme-color\" content=\"#070b14\">"
-            f"<title>{esc(name)} | {esc(title)}</title><style>{CSS}{BRAND_CSS}</style>{head_extra}</head>"
+            f"<title>{esc(name)} | {esc(title)}</title>{FONTS}<style>{CSS}{BRAND_CSS}</style>{head_extra}</head>"
             f"<body><div class=\"wrap\">{top}{body}<footer><div class=\"disc\">{esc(DISCLAIMER)}</div>"
             f"{esc(name)}. {esc(FOOTER)}</footer></div>"
             f"{'<script>' + extra_js + '</script>' if extra_js else ''}</body></html>")
