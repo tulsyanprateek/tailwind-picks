@@ -70,7 +70,7 @@ def build_ohlc(prices: dict[str, pd.DataFrame], symbols: list[str],
 
 
 def simulate(panels: Panels, ohlc: OHLC, cfg: dict, start: pd.Timestamp, end: pd.Timestamp,
-             modules: dict) -> SimResult:
+             modules: dict, sectors: dict[str, str] | None = None) -> SimResult:
     cal = panels.calendar
     pcfg = cfg["portfolio"]
     use_regime = modules.get("regime_filter", True)
@@ -180,7 +180,21 @@ def simulate(panels: Panels, ohlc: OHLC, cfg: dict, start: pd.Timestamp, end: pd
                 budget = port_value / n_hold
                 # Skip stocks where even one share costs more than the per-stock amount.
                 picks = [(r, sym) for r, sym in enumerate(ranked, 1) if sym not in held_syms
-                         and limit_price(panels.close.iloc[s][sym], cfg) <= budget][:free]
+                         and limit_price(panels.close.iloc[s][sym], cfg) <= budget]
+                # Optional: at most N stocks from the same sector.
+                cap = pcfg.get("max_per_sector")
+                if cap and sectors:
+                    count: dict[str, int] = {}
+                    for p in held:
+                        count[sectors.get(p.symbol, p.symbol)] = count.get(sectors.get(p.symbol, p.symbol), 0) + 1
+                    chosen = []
+                    for r, sym in picks:
+                        sec = sectors.get(sym, sym)
+                        if count.get(sec, 0) < cap:
+                            chosen.append((r, sym))
+                            count[sec] = count.get(sec, 0) + 1
+                    picks = chosen
+                picks = picks[:free]
                 for rank, sym in picks:
                     o, h, l, _ = bar(sym, i)
                     lc = panels.close.iloc[s][sym]

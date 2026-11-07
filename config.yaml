@@ -118,6 +118,10 @@ portfolio:
   # A holding is kept at a check-in while it still passes the filters and ranks within
   # this many places. This avoids selling and rebuying on small rank changes (saves charges).
   keep_if_rank_within: 10
+  # Optional: at most this many holdings from the same sector (blank = no limit). Tested on
+  # 2014 to 2020: "3 stocks, 1 per sector" did slightly better than 5 stocks, but on 2021+ data
+  # the two were about equal (22% vs 24% a year), so 5 stocks without a limit is kept.
+  max_per_sector:
 
 trade:
   # Buy with a CNC limit order at the last close + 2%. If the stock opens higher and never
