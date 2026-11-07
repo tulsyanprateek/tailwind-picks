@@ -9,7 +9,7 @@ import pandas as pd
 from .utils import inr
 
 CSS = """
-:root{--bg:#0b0e14;--panel:#121722;--panel2:#171d2a;--line:#1f2736;--text:#e6e9f0;--muted:#8a94a7;
+:root{--bg:#000000;--panel:#0b0d12;--panel2:#13161d;--line:#1d222c;--text:#e6e9f0;--muted:#8a94a7;
 --green:#22c55e;--green-bg:rgba(34,197,94,.12);--red:#ef4444;--red-bg:rgba(239,68,68,.12);--amber:#f5b942;
 --amber-bg:rgba(245,185,66,.12);--blue:#3b82f6;--violet:#a78bfa;--grey:#7d8696}
 *{box-sizing:border-box}
@@ -98,7 +98,7 @@ def page(title: str, body: str, extra_js: str = "", brand: tuple[str, str] | Non
                                           for h, t in NAV) + "</nav>")
     return (f"<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
             f"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-            f"<meta name=\"robots\" content=\"noindex,nofollow\"><meta name=\"theme-color\" content=\"#070b14\">"
+            f"<meta name=\"robots\" content=\"noindex,nofollow\"><meta name=\"theme-color\" content=\"#000000\">"
             f"<title>{esc(name)} | {esc(title)}</title>{FONTS}<style>{CSS}{BRAND_CSS}</style>{head_extra}</head>"
             f"<body><div class=\"wrap\">{top}{body}<footer><div class=\"disc\">{esc(DISCLAIMER)}</div>"
             f"{esc(name)}. {esc(FOOTER)}</footer></div>"

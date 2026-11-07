@@ -185,12 +185,12 @@ def run(cfg: dict, log) -> int:
     for r, s in enumerate(list_syms, 1):
         w = pick_map[s].why if s in pick_map else why_for(s, (ranked if regime_on else ranked_any).index(s) + 1)
         watch_why.append(w)
-    charts = {"NIFTY": index_payload(index_df, data_ts, cfg, sessions=500)}
+    charts = {"NIFTY": index_payload(index_df, data_ts, cfg, sessions=250)}
     for w in watch_why:
-        charts[w.symbol] = stock_payload(fresh[w.symbol], index_df, data_ts, sessions=500,
+        charts[w.symbol] = stock_payload(fresh[w.symbol], index_df, data_ts, sessions=250,
                                          stop=w.levels["stop"], limit=w.levels["buy"])
         charts[w.symbol]["aim"] = w.levels.get("aim")
-        w.second, w.second_agree, extra = second_opinion(fresh[w.symbol], data_ts)
+        w.second, w.second_agree, extra = second_opinion(fresh[w.symbol], data_ts, sessions=250)
         w.logo = get_logo(w.domain, cfg)
         charts[w.symbol].update(extra)
 
