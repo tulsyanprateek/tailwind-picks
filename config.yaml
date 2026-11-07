@@ -1,0 +1,166 @@
+# NSE Momentum Rotation Screener: configuration
+#
+# How it works, in short:
+#   Every 2 weeks (first trading day on or after the 1st and the 15th of the month) the tool
+#   picks the 5 strongest Nifty 100 stocks that are in a healthy uptrend, but only while the
+#   Nifty 50 itself is in an uptrend. Each holding gets a stop loss and a target that you set
+#   as a GTT order on Kite, so nothing needs watching between check-ins.
+#
+# Percentages are written as plain numbers: 8 means 8%.
+# These defaults are standard textbook values. Do not tune them to make the backtest look
+# better: that is curve fitting and it will not hold up with real money.
+
+paths:
+  # Where report.html, candidates.json, backtest.html and the CSV exports go.
+  # Relative paths are relative to this project folder. An absolute path works too,
+  # for example a synced cloud folder so you can open the reports on your phone:
+  #   output_dir: "C:/Users/you/OneDrive/screener"
+  output_dir: output
+  # Universe, fundamentals, results calendar and your open trades live here.
+  data_dir: data
+  # Cached daily prices, one CSV per symbol. Delete a file to force a full re-download.
+  cache_dir: data/cache
+  # Run logs (one file per command).
+  log_dir: logs
+
+universe:
+  # Official Nifty 100 constituent list. Tried on every run; the local file is the fallback.
+  download_url: "https://niftyindices.com/IndexConstituent/ind_nifty100list.csv"
+  # File inside data_dir with columns: symbol, company, industry
+  file: nifty100.csv
+  # A downloaded list shorter than this is treated as a failed download.
+  min_rows: 90
+
+prices:
+  # Start of the price download. Two years before the backtest so the 200-day and
+  # 12-month indicators are ready on the first backtest day.
+  history_start: "2012-01-01"
+  # Yahoo Finance suffix for NSE listings (RELIANCE -> RELIANCE.NS).
+  yahoo_suffix: ".NS"
+  # Nifty 50 index, used for the market filter and the buy-and-hold benchmark.
+  benchmark_symbol: "^NSEI"
+  # Pause between Yahoo requests, in seconds, to avoid rate limits.
+  request_pause_seconds: 0.3
+  # Extra attempts after a failed download before the symbol is skipped.
+  max_retries: 2
+  # On each update the last few cached days are downloaded again. If any cached close
+  # differs from the fresh one by more than this %, a split or bonus happened and the
+  # full history is downloaded again (prices are split-adjusted).
+  split_check_tolerance_pct: 0.5
+  # Symbols with fewer sessions than this are skipped and listed in the report.
+  min_sessions: 260
+  # A bar dated today is treated as incomplete (and ignored) before this IST time.
+  session_complete_time_ist: "15:45"
+
+# Check-in schedule: the first trading day on or after each of these days of the month.
+# The picks use prices up to the close of the trading day BEFORE the check-in day, and
+# orders are placed at the open of the check-in day.
+schedule:
+  rebalance_days_of_month: [1, 15]
+
+# Filters. Each can be switched off (the backtest also shows results without them).
+modules:
+  regime_filter: true          # A: only hold stocks while the Nifty 50 is in an uptrend
+  trend_template: true         # B: each stock must be in a healthy uptrend
+  relative_strength: true      # C: only the strongest 30% of the universe
+  fundamentals: true           # G: quality filter for the live report (not in the backtest)
+  stop_and_target: true        # GTT stop loss and target on every holding
+
+# A. Market filter: ON when Nifty close > SMA(slow) AND SMA(fast) > SMA(slow).
+# When it is OFF at a check-in: sell everything and stay in cash.
+regime:
+  sma_fast: 50
+  sma_slow: 200
+
+# B. Trend template (Minervini). All conditions must hold.
+trend_template:
+  sma_short: 50               # close above this SMA
+  sma_mid: 150                # close above this SMA, and this SMA above the long SMA
+  sma_long: 200               # close above this SMA
+  long_sma_rising_sessions: 20  # long SMA must be higher than it was this many sessions ago
+  week52_sessions: 252        # sessions in a 52-week window
+  min_above_52w_low: 1.30     # close >= 1.30 x 52-week low
+  min_of_52w_high: 0.75       # close >= 0.75 x 52-week high
+
+# C. Relative strength (momentum): weighted returns, skipping the most recent week,
+# ranked as a percentile across the universe. Picks are ranked by this score.
+relative_strength:
+  skip_recent_sessions: 5
+  # lookback sessions -> weight (63 = 3 months, 126 = 6 months, 252 = 12 months)
+  weights:
+    63: 0.4
+    126: 0.3
+    252: 0.3
+  min_percentile: 70
+
+portfolio:
+  capital: 100000
+  holdings: 5                 # number of stocks held at once; each gets 1/5 of the portfolio
+  # A holding is kept at a check-in while it still passes the filters and ranks within
+  # this many places. This avoids selling and rebuying on small rank changes (saves charges).
+  keep_if_rank_within: 10
+
+trade:
+  # Buy with a CNC limit order at the last close + 2%. If the stock opens higher and never
+  # comes back to the limit that day, the order does not fill (do not chase).
+  max_gap_pct: 2
+  atr_period: 14
+  atr_stop_multiple: 2        # stop loss = entry minus 2 x ATR(14) ...
+  max_stop_pct: 8             # ... but never more than 8% below entry
+  target_r: 3                 # target = entry + 3 x (entry - stop)
+  # At each check-in the stop of a kept holding is raised (never lowered) to
+  # last close minus 2 x ATR(14), and to at least the entry price once the price has
+  # risen 1R (entry + 1 x risk).
+  breakeven_after_r: 1
+  gtt_stop_limit_below_pct: 1 # GTT stop limit price = stop trigger minus 1%
+  tick_size: 0.05             # prices on the Kite order sheet are rounded to this
+
+# G. Fundamentals (quality filter) from your Screener.in export, used by the live report.
+fundamentals:
+  file: fundamentals.csv      # inside data_dir
+  # Column names in your export. Change these if your Screener.in screen uses other names.
+  columns:
+    symbol: "NSE Code"
+    name: "Name"
+    roce: "ROCE %"
+    roe: "ROE %"
+    debt_to_equity: "Debt / Eq"
+    sales_growth_3y: "Sales growth 3Years %"
+    profit_growth_3y: "Profit growth 3Years %"
+    qtr_profit_yoy: "Qtr Profit Var %"
+    promoter_pledge: "Pledged percentage %"
+    industry: "Industry"
+  # Industry text containing any of these words marks a bank or NBFC.
+  financial_keywords: ["bank", "finance", "nbfc", "financial", "lending", "housing finance"]
+  non_financial:
+    min_roce: 15
+    max_debt_to_equity: 1
+    min_sales_growth_3y: 10
+    min_qtr_profit_yoy: 0     # must be strictly greater than this
+    max_promoter_pledge: 10
+  financial:
+    min_roe: 12
+    min_qtr_profit_yoy: 0     # must be strictly greater than this
+
+results_calendar:
+  file: results_calendar.csv  # inside data_dir, columns: symbol, date
+  avoid_within_days: 7        # results due within this many calendar days -> "Results soon, avoid"
+
+# Zerodha equity delivery charges. Verify at https://zerodha.com/charges before relying on them.
+costs:
+  stt_pct: 0.1                # on buy and sell value
+  exchange_txn_pct: 0.00307   # NSE transaction charge, both sides
+  sebi_per_crore: 10          # Rs 10 per crore, both sides
+  stamp_duty_buy_pct: 0.015   # buy side only
+  gst_pct: 18                 # on (transaction charge + SEBI fee)
+  dp_charge_per_sell: 15.93   # per sell order
+  slippage_pct: 0.1           # per side, applied to the fill price
+
+backtest:
+  start: "2014-01-01"
+  in_sample_end: "2020-12-31"
+  out_of_sample_start: "2021-01-01"
+  # Random (stock, day) pairs re-computed on data cut off at that day, to prove that no
+  # future data is used.
+  lookahead_spot_checks: 40
+  random_seed: 7

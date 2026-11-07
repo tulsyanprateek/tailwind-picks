@@ -1,0 +1,8 @@
+pandas
+numpy
+requests
+yfinance
+pyyaml
+
+# tests only
+pytest
