@@ -82,6 +82,14 @@ modules:
   relative_strength: true      # C: only the strongest 30% of the universe
   fundamentals: true           # G: quality filter for the live report (not in the backtest)
   stop_and_target: true        # GTT stop loss and target on every holding
+  # Extra filters tested on 2014 to 2020 (two sets of check-in dates). Every one made results
+  # worse than the current rules, so they are off:
+  #   volume_confirm (OBV rising over 50 days): 16% a year, worst fall -39% (current: 19%, -34%)
+  #   smooth_rank (rank by momentum / volatility): 16% a year, worst fall -38%
+  #   calm_filter (skip the 30% most volatile stocks): 9% a year, worst fall -41%
+  volume_confirm: false
+  smooth_rank: false
+  calm_filter: false
 
 # A. Market filter: ON when Nifty close > SMA(slow) AND SMA(fast) > SMA(slow).
 # When it is OFF at a check-in: sell everything and stay in cash.

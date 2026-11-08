@@ -39,6 +39,11 @@ def compute_symbol_signals(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     out["rs_score"] = ind.rs_score(c, rs["weights"], rs["skip_recent_sessions"])
     out["atr"] = ind.atr(h, l, c, cfg["trade"]["atr_period"])
     out["high_52w"] = hi52
+    # Volume: more volume on up days than down days over the last 50 sessions (OBV rising).
+    obv = ind.obv(c, df["Volume"])
+    out["volume_ok"] = (obv - obv.shift(50)) > 0
+    # Volatility: yearly-scaled standard deviation of daily returns over 63 sessions.
+    out["vol63"] = c.pct_change().rolling(63, min_periods=63).std() * np.sqrt(252)
     return out
 
 
@@ -54,6 +59,8 @@ class Panels:
     rs_pct: pd.DataFrame
     atr: pd.DataFrame
     regime: pd.Series
+    volume_ok: pd.DataFrame | None = None
+    vol63: pd.DataFrame | None = None
 
 
 def trading_calendar(prices: dict[str, pd.DataFrame], min_symbols: int = 20) -> pd.DatetimeIndex:
@@ -76,6 +83,8 @@ def build_panels(signals: dict[str, pd.DataFrame], regime: pd.Series,
         rs_pct=rs_score.rank(axis=1, pct=True) * 100,
         atr=panel("atr"),
         regime=regime.reindex(calendar, method="ffill").fillna(False).astype(bool),
+        volume_ok=panel("volume_ok").fillna(False).astype(bool),
+        vol63=panel("vol63"),
     )
 
 
@@ -88,8 +97,15 @@ def ranked_eligible(p: Panels, i: int, cfg: dict, modules: dict,
         ok &= p.trend_ok.iloc[i]
     if modules.get("relative_strength", True):
         ok &= p.rs_pct.iloc[i] >= cfg["relative_strength"]["min_percentile"]
+    if modules.get("volume_confirm", False) and p.volume_ok is not None:
+        ok &= p.volume_ok.iloc[i]
+    if modules.get("calm_filter", False) and p.vol63 is not None:
+        vol = p.vol63.iloc[i]
+        ok &= vol.rank(pct=True) <= cfg.get("filters", {}).get("max_volatility_pct", 70) / 100
     if extra_ok is not None:
         ok &= pd.Series(extra_ok).reindex(ok.index).fillna(False).astype(bool)
+    if modules.get("smooth_rank", False) and p.vol63 is not None:
+        score = score / p.vol63.iloc[i]
     return list(score[ok].sort_values(ascending=False, kind="mergesort").index)
 
 
