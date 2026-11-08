@@ -164,18 +164,22 @@ def simulate(panels: Panels, ohlc: OHLC, cfg: dict, start: pd.Timestamp, end: pd
         if is_checkin:
             # 3. sell holdings that no longer qualify
             keep = set(ranked[:keep_rank])
+            max_hold = cfg["trade"].get("max_hold_sessions")   # optional: force short swing trades
+            just_sold: set[str] = set()
             for p in list(held):
                 o, _, _, _ = bar(p.symbol, i)
                 if math.isnan(o):
                     continue
-                if p.symbol not in keep:
-                    reason = "check-in: market filter OFF" if not regime_on else "check-in: dropped off the list"
+                if p.symbol not in keep or (max_hold and p.sessions >= max_hold):
+                    reason = ("check-in: market filter OFF" if not regime_on else
+                              "check-in: dropped off the list" if p.symbol not in keep else "check-in: holding time limit")
                     sell(p, i, o, reason)
+                    just_sold.add(p.symbol)
                     stats["sold_at_checkin"] += 1
             # 4. buy the strongest stocks not held
             free = n_hold - len(held)
             if free > 0 and ranked:
-                held_syms = {p.symbol for p in held}
+                held_syms = {p.symbol for p in held} | (just_sold if max_hold else set())
                 port_value = cash + sum(p.qty * p.last_close for p in held)
                 budget = port_value / n_hold
                 # Skip stocks where even one share costs more than the per-stock amount.

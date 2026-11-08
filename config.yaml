@@ -157,6 +157,11 @@ trade:
   # lowered) to last close minus 2 x ATR(14), and to at least the entry price once the
   # price has risen 1R (entry + 1 x risk).
   breakeven_after_r: 1
+  # Optional: force short swing trades by selling at a check-in after this many sessions
+  # (blank = off). Tested: max ~1 month with weekly check-ins looked safer on 2014 to 2020
+  # (worst fall -25% vs -34%) but not on 2021+ (-37% vs -33%), with twice the trades and
+  # charges. Holding winners longer works better, so it is off.
+  max_hold_sessions:
   gtt_stop_limit_below_pct: 1 # GTT stop limit price = stop trigger minus 1%
   tick_size: 0.05             # prices on the Kite order sheet are rounded to this
 
