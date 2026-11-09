@@ -1,5 +1,5 @@
 {
-  "data_date": "2026-11-06",
+  "data_date": "2026-11-09",
   "next_checkin": "2026-11-16",
   "checkin_next_session": false,
   "market_filter_on": false,
@@ -9,7 +9,7 @@
   "next_in_line": [
     {
       "rank": 7,
-      "symbol": "BSE"
+      "symbol": "ADANIPORTS"
     },
     {
       "rank": 8,
@@ -21,16 +21,17 @@
     },
     {
       "rank": 10,
-      "symbol": "HAL"
+      "symbol": "BSE"
     },
     {
       "rank": 11,
-      "symbol": "ADANIENSOL"
+      "symbol": "HAL"
     }
   ],
   "notes": [
-    "TMCV: only 245 sessions of history (since 2025-11-12), skipped (needs about a year of prices).",
-    "VAML: only 101 sessions of history (since 2026-06-15), skipped (needs about a year of prices).",
+    "TMCV: only 246 sessions of history (since 2025-11-12), skipped (needs about a year of prices).",
+    "VAML: only 102 sessions of history (since 2026-06-15), skipped (needs about a year of prices).",
+    "Nifty 50 index data ends 06 Nov; market filter uses that day.",
     "No fundamentals file (fundamentals.csv). The quality filter was not applied: every stock shows fundamentals N/A.",
     "No data/results_calendar.csv: check each stock's results date on Kite before buying."
   ]
