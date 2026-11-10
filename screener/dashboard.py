@@ -10,6 +10,7 @@ import math
 
 from .charts import LIB_URL
 from .html_common import esc, page
+from .live_js import LIVE_CSS, LIVE_JS
 from .utils import inr, pct
 
 FAILED_BANNER = "STRATEGY FAILED OUT OF SAMPLE"
@@ -171,7 +172,7 @@ def stock_card(w, d: dict, pick, market_on: bool) -> str:
     return f"""
 <div class="card">
   <div class="sh">{_logo(w.symbol, w.logo)}<div class="sname"><b>{sid}</b><span>{esc(w.company)}</span></div>
-  <div class="px2"><b>{inr(last, 2)}</b><span class="{chg_cls}">{chg:+.2f}%</span></div>
+  <div class="px2"><b data-lp="{sid}" data-d="2" data-s="1">{inr(last, 2)}</b><span data-lc="{sid}" data-d="2" class="{chg_cls}">{chg:+.2f}%</span></div>
   <span class="vd {esc(w.overall)}">{WORD.get(w.overall, w.overall)}</span></div>
   {brands}
   <div class="schart" data-chart="{sid}" data-kind="price"></div>
@@ -231,7 +232,7 @@ def build_dashboard_html(ctx: dict, cfg: dict) -> str:
     scan_txt = f'<span class="chip">{fn["scanned"]} scanned, {fn["both"]} qualify</span>' if fn else ""
     answer = (f'<div class="answer {tone}"><div class="big">{esc(big)}</div><p>{esc(why)}</p><div class="chips">'
               f'<span class="chip"><i class="dot {"g" if regime_on else "r"}"></i>Market {"strong" if regime_on else "weak"}</span>'
-              f'<span class="chip">Next check-in {checkin_day:%a %d %b}</span><span class="chip">Prices {data_day:%d %b %Y}</span>'
+              f'<span class="chip">Next check-in {checkin_day:%a %d %b}</span><span class="chip">Signals from {data_day:%d %b} close</span>'
               f'{scan_txt}</div></div>')
     banner = ""
     if failed:
@@ -253,7 +254,7 @@ def build_dashboard_html(ctx: dict, cfg: dict) -> str:
             say = "Market weak: Nifty is below its 200-day average."
         market = (f'<div class="card"><div class="sh"><span class="logo2" style="background:var(--panel2);color:#fff">N50</span>'
                   f'<div class="sname"><b>Nifty 50</b><span>{esc(say)}</span></div>'
-                  f'<div class="px2"><b>{inr(last, 0, symbol=False)}</b><span class="{"up" if chg >= 0 else "dn"}">{chg:+.2f}%</span></div></div>'
+                  f'<div class="px2"><b data-lp="NIFTY" data-d="0">{inr(last, 0, symbol=False)}</b><span data-lc="NIFTY" data-d="2" class="{"up" if chg >= 0 else "dn"}">{chg:+.2f}%</span></div></div>'
                   '<div class="mchart" data-chart="NIFTY" data-kind="price"></div>'
                   '<div class="lg"><span><i style="background:#f5b942"></i>50-day average</span>'
                   '<span><i style="background:#a78bfa"></i>200-day average</span></div></div>')
@@ -268,16 +269,10 @@ def build_dashboard_html(ctx: dict, cfg: dict) -> str:
         or '<p class="muted2">No stocks qualify today.</p>'
     rest_html = ""
     if rest:
-        items = []
-        for w in rest:
-            last, chg = _last_chg(charts[w.symbol]["c"])
-            sub = w.brands[0] if w.brands else w.company
-            items.append(f'<div class="row"><span class="r">{w.rank}</span><span class="nm"><b>{esc(w.symbol)}</b><span>{esc(sub)}</span></span>'
-                         f'<span class="p">{inr(last, 0)}</span><span class="c {"up" if chg >= 0 else "dn"}">{chg:+.1f}%</span>'
-                         f'<span class="sig {esc(w.overall)}">{esc(w.overall)}</span></div>')
+        rest_cards = "".join(stock_card(w, charts[w.symbol], pick_map.get(w.symbol), regime_on) for w in rest)
         rest_html = (f'<div class="sec">Rest of the Top {keep_n}</div><p class="muted2" style="margin:-4px 0 10px">'
-                     f'Own one of these? Keep it. Not in the Top {keep_n} on a check-in day? Sell it.</p>'
-                     f'<div class="list">{"".join(items)}</div>')
+                     f'Not for new buying. Own one of these? Keep it. Not in the Top {keep_n} on a check-in day? Sell it.</p>'
+                     f'<div class="grid">{rest_cards}</div>')
 
     hold = ""
     if holdings:
@@ -310,15 +305,21 @@ def build_dashboard_html(ctx: dict, cfg: dict) -> str:
     notes_html = ('<details class="more" style="border:0"><summary>Notes</summary><ul class="muted2">'
                   + "".join(f"<li>{n}</li>" for n in notes) + "</ul></details>")
 
-    body = (f'<div class="page">{answer}{banner}'
+    fresh = ('<div class="fresh" id="fresh"><i class="fdot"></i><div class="ftxt"><b id="fresh-a">Checking for the latest prices...</b>'
+             f'<span>Signals updated {ctx["generated"]:%d %b, %I:%M %p} IST. They change only after the market closes.</span></div>'
+             '<button class="fbtn" onclick="location.replace(location.pathname+&quot;?v=&quot;+Date.now())">Refresh</button></div>')
+    body = (f'<div class="page">{fresh}{answer}{banner}'
             + (f'<div class="sec">The market</div>{market}' if market else "")
             + f'<div class="sec">{esc(title)}</div><div class="grid">{cards}</div>{rest_html}{hold}{proof}{notes_html}'
             f'<div class="muted2" style="margin-top:10px">Updated {ctx["generated"]:%d %b %Y, %I:%M %p} IST</div></div>')
 
-    app = {k: v for k, v in charts.items() if k == "NIFTY" or any(w.symbol == k for w in top)}
+    app = {k: v for k, v in charts.items() if k == "NIFTY" or any(w.symbol == k for w in rows)}
     if st is not None and st.get("equity_weekly"):
         app["EQUITY"] = st["equity_weekly"]
     head = f'<script src="{LIB_URL}"></script>' if app else ""
-    js = "window.__APP=" + json.dumps(app, separators=(",", ":")) + ";" + JS
+    live = {"url": cfg.get("live", {}).get("url", ""), "gen": ctx["generated"].isoformat(timespec="seconds"),
+            "close": f"{data_day:%d %b}"}
+    js = ("window.__APP=" + json.dumps(app, separators=(",", ":")) + ";window.__LIVE=" + json.dumps(live) + ";"
+          + JS + LIVE_JS)
     html = page("Dashboard", body, js, brand=brand, head_extra=head, active="index.html")
-    return html.replace("</style>", CSS + "</style>", 1)
+    return html.replace("</style>", CSS + LIVE_CSS + "</style>", 1)

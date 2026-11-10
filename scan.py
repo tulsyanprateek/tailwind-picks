@@ -19,7 +19,7 @@ from screener.charts import index_payload, stock_payload
 from screener.confirm import second_opinion
 from screener.profiles import get_logo, get_profile
 from screener.config import load_config
-from screener.data import load_prices, load_universe
+from screener.data import load_prices, load_universe, yahoo_ticker
 from screener.fundamentals import evaluate, load_fundamentals, load_results_calendar
 from screener.report_how import build_how_html
 from screener.report_scan import build_report_html, candidates_json, phone_message
@@ -210,6 +210,10 @@ def run(cfg: dict, log) -> int:
            "top_list": list(enumerate(ranked[:cfg["portfolio"]["keep_if_rank_within"]], 1))}
     (out_dir / "report.html").write_text(build_report_html(ctx, cfg), encoding="utf-8")
     (out_dir / "candidates.json").write_text(candidates_json(ctx), encoding="utf-8")
+    tickers = {"NIFTY": cfg["prices"]["benchmark_symbol"]}
+    tickers.update({w.symbol: yahoo_ticker(w.symbol, cfg) for w in watch_why})
+    (out_dir / "watch.json").write_text(json.dumps(
+        {"page_generated": ctx["generated"].isoformat(timespec="seconds"), "tickers": tickers}), encoding="utf-8")
     (out_dir / "how.html").write_text(build_how_html(cfg, status, charts.get("NIFTY"), funnel), encoding="utf-8")
     (out_dir / "index.html").write_text((out_dir / "report.html").read_text(encoding="utf-8"), encoding="utf-8")
     text = phone_message(ctx)

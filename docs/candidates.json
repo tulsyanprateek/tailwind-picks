@@ -31,7 +31,6 @@
   "notes": [
     "TMCV: only 246 sessions of history (since 2025-11-12), skipped (needs about a year of prices).",
     "VAML: only 102 sessions of history (since 2026-06-15), skipped (needs about a year of prices).",
-    "Nifty 50 index data ends 06 Nov; market filter uses that day.",
     "No fundamentals file (fundamentals.csv). The quality filter was not applied: every stock shows fundamentals N/A.",
     "No data/results_calendar.csv: check each stock's results date on Kite before buying."
   ]

@@ -15,6 +15,11 @@ brand:
   name: "Tailwind Picks"
   tagline: "Strong stocks, rising market"
 
+# Live prices: the dashboard reads this file, refreshed every few minutes in market hours
+# by the "live prices" GitHub workflow (kept on a separate "live" branch).
+live:
+  url: "https://raw.githubusercontent.com/tulsyanprateek/tailwind-picks/live/live.json"
+
 paths:
   # Where report.html, candidates.json, backtest.html and the CSV exports go.
   # Relative paths are relative to this project folder. An absolute path works too,

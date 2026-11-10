@@ -1,0 +1,59 @@
+# Live prices for the Tailwind Picks dashboard.
+# One job loops through the trading day, fetching prices every 5 minutes and saving them
+# to the "live" branch (a single commit, replaced each time, so the main history stays clean).
+# Several start times are listed because GitHub can start scheduled jobs late; only one job
+# runs at a time and a late one simply takes over.
+name: Tailwind Picks live prices
+
+on:
+  schedule:
+    - cron: "38 3 * * 1-5"    # 9:08 am IST
+    - cron: "23 5 * * 1-5"    # 10:53 am IST (backup / takeover)
+    - cron: "8 7 * * 1-5"     # 12:38 pm IST (backup / takeover)
+    - cron: "53 8 * * 1-5"    # 2:23 pm IST (backup / takeover)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tailwind-picks-live
+  cancel-in-progress: false
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      SCREENER_OUTPUT_DIR: docs
+      TZ: Asia/Kolkata
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - name: Update prices until the market closes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          push_live() {
+            rm -rf /tmp/live && mkdir -p /tmp/live && cp docs/live.json /tmp/live/
+            git -C /tmp/live init -q -b live
+            git -C /tmp/live add live.json
+            git -C /tmp/live -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Live prices"
+            git -C /tmp/live push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" live
+          }
+          # Run from now until 3:40 pm IST, at most 5.5 hours (a later scheduled job takes over).
+          for i in $(seq 1 66); do
+            now=$((10#$(date +%H%M)))
+            if [ "$now" -lt 905 ] || [ "$now" -gt 1540 ]; then echo "Outside market hours ($now IST)"; break; fi
+            python live.py && push_live || echo "Update failed, will retry"
+            sleep 290
+          done

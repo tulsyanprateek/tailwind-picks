@@ -1,10 +1,12 @@
-# Runs Tailwind Picks every weekday at 6 pm IST in GitHub's cloud (free) and publishes
-# the report as a web page from the docs/ folder (GitHub Pages).
+# Runs Tailwind Picks every weekday evening in GitHub's cloud (free) and publishes the
+# report as a web page from the docs/ folder (GitHub Pages). Two start times are listed
+# because GitHub can start scheduled jobs late; running twice is harmless.
 name: Tailwind Picks daily update
 
 on:
   schedule:
-    - cron: "30 12 * * 1-5"   # 12:30 UTC = 6:00 pm IST, Monday to Friday
+    - cron: "7 11 * * 1-5"    # 4:37 pm IST, after the market closes
+    - cron: "37 13 * * 1-5"   # 7:07 pm IST (backup)
   workflow_dispatch:           # "Run workflow" button for a manual run
 
 permissions:
@@ -53,4 +55,17 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs
           git commit -m "Report for $(date +%Y-%m-%d)" || echo "No change"
+          git pull -q --rebase origin main
           git push
+
+      - name: Closing prices for the dashboard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python live.py
+          rm -rf /tmp/live && mkdir -p /tmp/live && cp docs/live.json /tmp/live/
+          git -C /tmp/live init -q -b live
+          git -C /tmp/live add live.json
+          git -C /tmp/live -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Live prices"
+          git -C /tmp/live push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" live
