@@ -1,5 +1,5 @@
 {
-  "data_date": "2026-11-09",
+  "data_date": "2026-11-11",
   "next_checkin": "2026-11-16",
   "checkin_next_session": false,
   "market_filter_on": false,
@@ -9,29 +9,29 @@
   "next_in_line": [
     {
       "rank": 7,
-      "symbol": "ADANIPORTS"
+      "symbol": "TECHM"
     },
     {
       "rank": 8,
-      "symbol": "TVSMOTOR"
+      "symbol": "ADANIPORTS"
     },
     {
       "rank": 9,
-      "symbol": "ADANIGREEN"
-    },
-    {
-      "rank": 10,
       "symbol": "BSE"
     },
     {
+      "rank": 10,
+      "symbol": "TVSMOTOR"
+    },
+    {
       "rank": 11,
-      "symbol": "HAL"
+      "symbol": "ADANIGREEN"
     }
   ],
   "notes": [
-    "TMCV: only 246 sessions of history (since 2025-11-12), skipped (needs about a year of prices).",
-    "VAML: only 102 sessions of history (since 2026-06-15), skipped (needs about a year of prices).",
-    "Prices for 11 Nov are not available yet; this report uses 09 Nov.",
+    "TMCV: only 247 sessions of history (since 2025-11-12), skipped (needs about a year of prices).",
+    "VAML: only 103 sessions of history (since 2026-06-15), skipped (needs about a year of prices).",
+    "Prices for 12 Nov are not available yet; this report uses 11 Nov.",
     "No fundamentals file (fundamentals.csv). The quality filter was not applied: every stock shows fundamentals N/A.",
     "No data/results_calendar.csv: check each stock's results date on Kite before buying."
   ]
