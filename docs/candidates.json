@@ -1,7 +1,7 @@
 {
-  "data_date": "2026-11-11",
+  "data_date": "2026-11-12",
   "next_checkin": "2026-11-16",
-  "checkin_next_session": false,
+  "checkin_next_session": true,
   "market_filter_on": false,
   "backtest_passed": true,
   "picks": [],
@@ -9,11 +9,11 @@
   "next_in_line": [
     {
       "rank": 7,
-      "symbol": "TECHM"
+      "symbol": "ETERNAL"
     },
     {
       "rank": 8,
-      "symbol": "ADANIPORTS"
+      "symbol": "KOTAKBANK"
     },
     {
       "rank": 9,
@@ -29,9 +29,9 @@
     }
   ],
   "notes": [
-    "TMCV: only 247 sessions of history (since 2025-11-12), skipped (needs about a year of prices).",
-    "VAML: only 103 sessions of history (since 2026-06-15), skipped (needs about a year of prices).",
-    "Prices for 12 Nov are not available yet; this report uses 11 Nov.",
+    "TMCV: only 248 sessions of history (since 2025-11-12), skipped (needs about a year of prices).",
+    "VAML: only 104 sessions of history (since 2026-06-15), skipped (needs about a year of prices).",
+    "Prices for 13 Nov are not available yet; this report uses 12 Nov.",
     "No fundamentals file (fundamentals.csv). The quality filter was not applied: every stock shows fundamentals N/A.",
     "No data/results_calendar.csv: check each stock's results date on Kite before buying."
   ]
