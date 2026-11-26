@@ -1,5 +1,5 @@
 {
-  "data_date": "2026-11-23",
+  "data_date": "2026-11-25",
   "next_checkin": "2026-12-01",
   "checkin_next_session": false,
   "market_filter_on": false,
@@ -7,10 +7,6 @@
   "picks": [],
   "holdings": [],
   "next_in_line": [
-    {
-      "rank": 6,
-      "symbol": "BOSCHLTD"
-    },
     {
       "rank": 7,
       "symbol": "ICICIBANK"
@@ -21,17 +17,21 @@
     },
     {
       "rank": 9,
-      "symbol": "ADANIPORTS"
+      "symbol": "BSE"
     },
     {
       "rank": 10,
-      "symbol": "BSE"
+      "symbol": "ADANIPORTS"
+    },
+    {
+      "rank": 11,
+      "symbol": "DLF"
     }
   ],
   "notes": [
-    "TMCV: only 255 sessions of history (since 2025-11-12), skipped (needs about a year of prices).",
-    "VAML: only 111 sessions of history (since 2026-06-15), skipped (needs about a year of prices).",
-    "Prices for 25 Nov are not available yet; this report uses 23 Nov.",
+    "TMCV: only 256 sessions of history (since 2025-11-12), skipped (needs about a year of prices).",
+    "VAML: only 112 sessions of history (since 2026-06-15), skipped (needs about a year of prices).",
+    "Prices for 26 Nov are not available yet; this report uses 25 Nov.",
     "No fundamentals file (fundamentals.csv). The quality filter was not applied: every stock shows fundamentals N/A.",
     "No data/results_calendar.csv: check each stock's results date on Kite before buying."
   ]
