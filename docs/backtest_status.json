@@ -1,14 +1,14 @@
 {
   "passed": true,
   "reasons": [],
-  "generated": "2026-11-27T04:05:15+05:30",
+  "generated": "2026-11-28T01:26:03+05:30",
   "oos_expectancy_inr": 2317.463078086082,
   "oos_expectancy_r": 0.47394331224918973,
-  "oos_cagr": 26.937148415542666,
+  "oos_cagr": 26.923099407556307,
   "oos_max_dd_pct": -26.36294649010137,
-  "nifty_oos_cagr": 10.911513949573992,
+  "nifty_oos_cagr": 10.9536388365862,
   "nifty_oos_max_dd_pct": -17.22975608467007,
-  "data_end": "2026-11-25",
+  "data_end": "2026-11-26",
   "equity_weekly": {
     "t": [
       "2014-01-03",
@@ -2036,7 +2036,7 @@
       402343,
       404174,
       414724,
-      415024
+      416073
     ]
   },
   "interval_check": [
@@ -2079,13 +2079,13 @@
     "avg_win_pct": 25.38949981637473,
     "avg_loss_pct": -7.138393969478625,
     "avg_hold_days": 55.08455882352941,
-    "pct_time_in_cash": 34.863250550141466,
-    "full_cagr": 20.927414079007644,
+    "pct_time_in_cash": 34.883720930232556,
+    "full_cagr": 20.92253755105975,
     "full_max_dd_pct": -33.72737076708392,
-    "nifty_full_cagr": 11.668370781436344,
+    "nifty_full_cagr": 11.687608655670779,
     "nifty_full_max_dd_pct": -38.439852452742095,
     "final_value": 1159860.275469943,
-    "nifty_final_value": 415023.7561431028,
+    "nifty_final_value": 416072.59761170996,
     "start": "2014"
   }
 }

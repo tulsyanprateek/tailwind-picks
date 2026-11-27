@@ -1,5 +1,5 @@
 {
-  "data_date": "2026-11-25",
+  "data_date": "2026-11-26",
   "next_checkin": "2026-12-01",
   "checkin_next_session": false,
   "market_filter_on": false,
@@ -9,7 +9,7 @@
   "next_in_line": [
     {
       "rank": 7,
-      "symbol": "ICICIBANK"
+      "symbol": "TECHM"
     },
     {
       "rank": 8,
@@ -17,7 +17,7 @@
     },
     {
       "rank": 9,
-      "symbol": "BSE"
+      "symbol": "ZYDUSLIFE"
     },
     {
       "rank": 10,
@@ -29,9 +29,9 @@
     }
   ],
   "notes": [
-    "TMCV: only 256 sessions of history (since 2025-11-12), skipped (needs about a year of prices).",
-    "VAML: only 112 sessions of history (since 2026-06-15), skipped (needs about a year of prices).",
-    "Prices for 26 Nov are not available yet; this report uses 25 Nov.",
+    "TMCV: only 257 sessions of history (since 2025-11-12), skipped (needs about a year of prices).",
+    "VAML: only 113 sessions of history (since 2026-06-15), skipped (needs about a year of prices).",
+    "Prices for 27 Nov are not available yet; this report uses 26 Nov.",
     "No fundamentals file (fundamentals.csv). The quality filter was not applied: every stock shows fundamentals N/A.",
     "No data/results_calendar.csv: check each stock's results date on Kite before buying."
   ]
